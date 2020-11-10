@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+    <head>RPi Image Taker</head>
+    <body>
+    <a href="/capture" id="not_a_button">Take picture</a><br>
+
+    <!-- <a href="/static" id="not_a_button" download>Download Images</a><br> -->
+    
+	 
+    {% for img in imgs%}
+        <a href="{{img}}" download>{{img}}</a><br>
+        <img src="{{img}}" alt="{{img}}" width="500" height="600"><br><br>
+    {% endfor %}
+    </body>
+</html>
