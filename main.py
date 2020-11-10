@@ -19,18 +19,12 @@ def ndvi(img,img_nm):
     #create ndvi calculation components
     rb_diff = (r_ch - b_ch)
     rb_sum = (r_ch + b_ch)
-
-    #redBlueSum[redBlueSum ==0] = 0.01
     
     #calculate ndvi
     ndvi_l = rb_diff/rb_sum
     
     print(ndvi_l)
     plt.imsave('out_images/' + img_nm + '.png', ndvi_l, vmin=-1.0,vmax=1.0)
-    
-    #for color mapping
-    #fastiecm=LinearSegmentedColormap.from_list('mylist', colors) 
-    #plt.imsave(imageOutPath + processedImgFilename +'.png',arrNDVI,cmap=fastiecm, vmin=-1.0, vmax=1.0, format='png')
 
 
 #function searches in raw images dir for all jpg files and returns them as an array
