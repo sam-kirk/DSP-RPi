@@ -6,12 +6,12 @@ Created on Tue Nov 10 15:55:22 2020
 @author: sam
 """
 from flask import Flask, request, render_template, redirect, url_for, send_from_directory, send_file
-from picamera import PiCamera
 from time import sleep
 from datetime import datetime
 import glob
 
 app = Flask(__name__)
+
 
 def get_file_names():
     jpg_files = []
