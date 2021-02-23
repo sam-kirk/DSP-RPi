@@ -39,7 +39,7 @@ def image_capture():
             take_picture = request.form.get("take_picture")
             print('Take picture? = ',take_picture)
             if take_picture == "t":
-                timestamp = datetime.now().strftime("-%Y-%m-%d[%H:%M:%S]")
+                timestamp = datetime.now().strftime("-%Y-%m-%d-%H_%M_%S")
                 image_src = "static/image" + timestamp + ".png"
                 #print('bing')
                 camera.start_preview()
@@ -55,5 +55,4 @@ def image_capture():
 
 
 if __name__ == '__main__':
-
     app.run(host='0.0.0.0')
