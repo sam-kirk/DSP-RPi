@@ -33,10 +33,10 @@ def home():
 
 @app.route('/image-capture', methods=['POST', 'GET'])
 def image_capture():
+    is_pi = True
     if is_pi:
         try:
             take_picture = request.form.get("take_picture")
-            print('lemons = ',take_picture)
             if take_picture == "t":
                 timestamp = datetime.now().strftime("-%Y-%m-%d[%H:%M:%S]")
                 image_src = "static/image" + timestamp + ".png"
