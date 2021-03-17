@@ -1,4 +1,5 @@
 import cv2
+import numpy as nmp
 
 
 class Image:
@@ -10,19 +11,38 @@ class Image:
     ndvi_bitmap = []
     cmap_bitmap = []  # color mapped bitmap
 
+    # constructor only includes name and filepath as all other data is dependent on these values
     def __init__(self, name, filepath):
         self.name = name
         self.filepath = filepath
 
+    # load in the raw image as a bitmap
     def set_raw_bmap(self):
         full_path = self.filepath + self.name
         self.raw_bitmap = cv2.imread(full_path)
 
+    # pre-process the bitmap for better analysis
     def set_prepro_bitmap(self):
-        self.prepro_bitmap = preprocess(self.raw_bitmap)
+        prepro_bitmap = self.raw_bitmap
+        self.prepro_bitmap = prepro_bitmap
 
+    # calculate ndvi reading per pixel
     def set_ndvi_bitmap(self):
-        self.ndvi_bitmap = ndvi(self.prepro_bitmap)
+        # split image into rgb channels
+        b_ch, g_ch, r_ch = cv2.split(self.prepro_bitmap)
+
+        # convert to array of floats for matrix calculations
+        r_ch = nmp.asarray(r_ch, dtype=nmp.float32)
+        b_ch = nmp.asarray(b_ch, dtype=nmp.float32)
+
+        try:
+            # ndvi equation
+            ndvi_bitmap = (r_ch - b_ch)/(r_ch + b_ch)
+        except ZeroDivisionError:
+            print('NDVI Base divide by zero')
+
+        self.ndvi_bitmap = ndvi_bitmap.tolist()
 
     def set_cmap_bitmap(self):
-        self.cmap_bitmap = cmap(self.ndvi_bitmap)
+        cmap_bitmap = self.ndvi_bitmap
+        self.cmap_bitmap = cmap_bitmap
