@@ -1,6 +1,7 @@
 # timed image capture to run on Pi
 from picamera import PiCamera
 from time import sleep
+from datetime import datetime
 
 if __name__ == '__main__':
     cont = True
@@ -27,7 +28,9 @@ if __name__ == '__main__':
             # start of image capture loop
             for i in range(x):
                 sleep(t)
-                camera.capture('/home/pi/Desktop/image%s.jpg' % i)
+                timestamp = datetime.now().strftime("_%Y-%m-%d_%H-%M-%S")
+                image_src = "static/raw-image" + timestamp + ".png"
+                camera.capture('image_src')
 
         # continue or exit
         resp = input('Exit? (y/n)').upper()
