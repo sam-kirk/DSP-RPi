@@ -1,0 +1,1 @@
+# Runs a flask web app that allows pictures to be taken on trigger click
