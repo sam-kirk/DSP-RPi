@@ -26,33 +26,9 @@ app = Flask(__name__)
 @app.route('/home')
 def home():
     if not is_pi:
-        # todo make if not pi don't show take picture sidebar option
-        print('beep')
+        print('Navigate yo home')
     return render_template('home.html')
 
 
-@app.route('/image-capture', methods=['POST', 'GET'])
-def image_capture():
-    if is_pi:
-        try:
-            take_picture = request.form.get("take_picture")
-            print('lemons = ',take_picture)
-            if take_picture == "t":
-                timestamp = datetime.now().strftime("-%Y-%m-%d[%H:%M:%S]")
-                image_src = "static/image" + timestamp + ".png"
-                print('bing')
-                camera.start_preview()
-                # sleep(2)
-                camera.capture(image_src)
-                camera.stop_preview()
-                print('bong')
-                return render_template('image-capture.html')
-        finally:
-            return render_template('image-capture.html')
-    else:
-        return redirect('/home')
-
-
 if __name__ == '__main__':
-
     app.run(host='0.0.0.0')
