@@ -26,8 +26,7 @@ app = Flask(__name__)
 @app.route('/home')
 def home():
     if not is_pi:
-        # todo make if not pi don't show take picture sidebar option
-        print('beep')
+        print('Navigate yo home')
     return render_template('home.html')
 
 
@@ -54,5 +53,4 @@ def image_capture():
 
 
 if __name__ == '__main__':
-
     app.run(host='0.0.0.0')
