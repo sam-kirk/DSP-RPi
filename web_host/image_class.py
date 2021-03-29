@@ -3,9 +3,8 @@ import numpy as nmp
 
 
 class Image:
-
-    filepath = ''
-    name = ''
+    name = ""
+    filepath = ""
     raw_bitmap = []
     prepro_bitmap = []  # pre-processed bitmap
     ndvi_bitmap = []
@@ -27,7 +26,7 @@ class Image:
 
 
     # pre-process the bitmap for better analysis
-    def set_prepro_bitmap(self):
+    def create_prepro_bitmap(self):
         prepro_bitmap = self.raw_bitmap
         self.prepro_bitmap = prepro_bitmap
 
@@ -37,7 +36,7 @@ class Image:
 
 
     # calculate ndvi reading per pixel
-    def set_ndvi_bitmap(self):
+    def create_ndvi_bitmap(self):
         # split image into rgb channels
         b_ch, g_ch, r_ch = cv2.split(self.prepro_bitmap)
 
@@ -49,7 +48,7 @@ class Image:
             # ndvi equation
             ndvi_bitmap = (r_ch - b_ch)/(r_ch + b_ch)
         except ZeroDivisionError:
-            print('NDVI Base divide by zero')
+            print("NDVI Base - Divide by zero")
 
         self.ndvi_bitmap = ndvi_bitmap.tolist()
 
@@ -59,11 +58,16 @@ class Image:
 
 
     # apply the colourmap to ndvi image for better readability
-    def set_cmap_bitmap(self):
+    def create_cmap_bitmap(self):
         cmap_bitmap = self.ndvi_bitmap
         self.cmap_bitmap = cmap_bitmap
 
     def save_cmap_bitmap(self, new_filepath):
         destination = new_filepath + self.name
         cv2.imsave(destination, self.cmap_bitmap)
+
+    @staticmethod
+    def test():
+        print("beepboop")
+        return True
 
