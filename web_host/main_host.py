@@ -65,13 +65,23 @@ def load_image_set(f_path, term):
 
 def mock_function(images):  # todo rename
     print("---- Here")
-    for image in images:
-        image.set_raw_bmap()
-        image.create_prepro_bitmap()
-        image.create_ndvi_bitmap()
-        image.create_cmap_bitmap()
-        print(image.raw_bitmap)
+    images[0].process_image_full()
+    '''for image in images:
+        image.process_image_full()'''
 
+
+# Create the sub folders for image storage
+def make_sub_paths(): #todo delete if not used?
+    # define the name of the directory to be created
+    path = ["/prepro", "/ndvi", "/cmap"]
+    for p in path:
+        os.mkdir(p)
+        '''try:
+            os.mkdir(p)
+        except OSError:
+            print("Creation of the directory %s failed" % p)
+        else:
+            print("Successfully created the directory %s " % p)'''
 
 if __name__ == "__main__":
     #app.run(host="0.0.0.0")
