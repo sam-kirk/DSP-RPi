@@ -48,7 +48,6 @@ class Image:
         r_b_sum[r_b_sum == 0] = 0.01  # ensures no divide by zero errors and reduces noise
         # ndvi equation
         ndvi_bitmap = (r_ch - b_ch) / r_b_sum
-        print(np.amin(ndvi_bitmap))
         self.ndvi_bitmap = ndvi_bitmap.tolist()
 
 
@@ -85,6 +84,8 @@ class Image:
 
 
     def analyse_image(self):
+        # Based on code by Adrian Rosebrock 2016 accessed March 2021 at
+        # https://www.pyimagesearch.com/2016/10/31/detecting-multiple-bright-spots-in-an-image-with-python-and-opencv/
         from imutils import contours
         from skimage import measure
         import imutils
