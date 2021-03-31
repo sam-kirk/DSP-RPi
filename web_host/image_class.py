@@ -62,12 +62,35 @@ class Image:
         # vmin = 0 as NDVI below 0 suggests area is not biomass (likely water)
         # vmax as max value to get most out of the cmap scale todo may not be good idea for comparisons
         # plt.imsave(destination, self.ndvi_bitmap, cmap="binary", vmin=0.0, vmax=np.amax(self.ndvi_bitmap))
-        plt.imsave(destination, self.ndvi_bitmap, cmap="binary")
+        plt.imsave(destination, self.ndvi_bitmap, cmap="binary", vmin=-1, vmax=1)
 
     # apply the colourmap to ndvi image for better readability
     def create_cmap_bitmap(self):
-        cmap_bitmap = self.ndvi_bitmap
-        self.cmap_bitmap = cmap_bitmap
+        img = cv2.imread(self.filepath + self.name.split(".")[0] + "_ndvi.png")
+        img = cv2.normalize(img, normalizedData_l1)
+        cv2.imshow('v', img)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+        # approximate health based on ndvi value
+        vh = 0.66 * 255
+        h = 0.33 * 255
+
+        maskv=cv2.inRange(img, (vh,vh,vh), (255,255,255))
+        maskh=cv2.inRange(img, (h, h, h), (vh, vh, vh))
+        mask=cv2.inRange(img, (0, 0, 0), (h, h, h))
+
+
+        cv2.imshow('maskv', maskv)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+
+        cv2.imshow('maskh', maskh)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+
+        cv2.imshow('mask', mask)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
 
     def save_cmap_bitmap(self, new_filepath):
         destination = new_filepath

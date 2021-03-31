@@ -71,7 +71,8 @@ def load_image_set(f_path, term):
 def mock_function(images):  # todo rename
     print("---- Here")
     images[0].process_image_full()
-    images[0].object_detection()
+    #images[0].object_detection()
+    images[0].create_cmap_bitmap()
     '''for image in images:
         image.process_image_full()'''
 
