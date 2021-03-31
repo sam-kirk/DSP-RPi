@@ -2,6 +2,9 @@ import cv2
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
+from imutils import contours
+from skimage import measure
+import imutils
 
 
 class Image:
@@ -23,38 +26,41 @@ class Image:
         full_path = self.filepath + self.name
         self.raw_bitmap = cv2.imread(full_path)
 
-
     # pre-process the bitmap for better analysis
     def create_prepro_bitmap(self):
         prepro_bitmap = self.raw_bitmap
         self.prepro_bitmap = prepro_bitmap
 
-    #self.save_prepro_bitmap(save_path + "_prepro")
     def save_prepro_bitmap(self, new_filepath):
         destination = new_filepath
         cv2.imwrite(destination, self.prepro_bitmap)
-
 
     # calculate ndvi reading per pixel
     def create_ndvi_bitmap(self):
         # split image into rgb channels
         b_ch, g_ch, r_ch = cv2.split(self.prepro_bitmap)
 
+        # with No IR filter red is considered to be mostly IR
+        # ss a blue filter was used all visible light is in the blue channel
+
         # convert to array of floats for matrix calculations
         r_ch = np.asarray(r_ch).astype('float')
         b_ch = np.asarray(b_ch).astype('float')
 
-        r_b_sum = (r_ch+b_ch)
+        # separate sum to allow for limit
+        r_b_sum = (r_ch + b_ch)
         r_b_sum[r_b_sum == 0] = 0.01  # ensures no divide by zero errors and reduces noise
+
         # ndvi equation
         ndvi_bitmap = (r_ch - b_ch) / r_b_sum
-        self.ndvi_bitmap = ndvi_bitmap.tolist()
-
+        self.ndvi_bitmap = ndvi_bitmap.tolist()  # todo to list needed?
 
     def save_ndvi_bitmap(self, new_filepath):
         destination = new_filepath
+        # Save as binary cmap for greyscale
+        # vmin = 0 as NDVI below 0 suggests area is not biomass (likely water)
+        # vmax as max value to get most out of the cmap scale todo may not be good idea for comparisons
         plt.imsave(destination, self.ndvi_bitmap, cmap="binary", vmin=0.0, vmax=np.amax(self.ndvi_bitmap))
-
 
     # apply the colourmap to ndvi image for better readability
     def create_cmap_bitmap(self):
@@ -64,7 +70,6 @@ class Image:
     def save_cmap_bitmap(self, new_filepath):
         destination = new_filepath
         plt.imsave(destination, self.cmap_bitmap, cmap="Greens_r")
-
 
     # function takes a raw image and populates all the values and saves them in the directory
     def process_image_full(self):
@@ -82,13 +87,9 @@ class Image:
         self.create_cmap_bitmap()
         self.save_cmap_bitmap(save_path + "_cmap.png")
 
-
     def analyse_image(self):
         # Based on code by Adrian Rosebrock 2016 accessed March 2021 at
         # https://www.pyimagesearch.com/2016/10/31/detecting-multiple-bright-spots-in-an-image-with-python-and-opencv/
-        from imutils import contours
-        from skimage import measure
-        import imutils
 
         # construct the argument parse and parse the arguments
         image = cv2.imread(self.filepath + self.name.split(".")[0] + "_ndvi.png")

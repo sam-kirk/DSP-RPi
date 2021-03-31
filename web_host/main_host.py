@@ -53,12 +53,17 @@ def image_capture():
         return redirect("/home")
 
 
+# takes all images in file path and creates a new Image object for each
+# Image objects are appended to a list and the list is returned
 def load_image_set(f_path, term):
     print("---- Start")
     images = []  # for storing image objects for this set
     for file in glob.glob(f_path + term):  # for each file that matches the term in the given filepath
-        image = Image(file.split("/")[-1], f_path)  # get the filename at the end of the glob path
-        images.append(image)
+        # re-process raw images but do not process the old processed images
+        if (file.split("_")[-1] != "prepro.png")and(file.split("_")[-1] != "ndvi.png")and(file.split("_")[-1] != "cmap.png"):
+            image = Image(file.split("/")[-1], f_path)  # get the filename at the end of the glob path
+            images.append(image)
+
     print(images)
     return images
 
@@ -70,19 +75,6 @@ def mock_function(images):  # todo rename
     '''for image in images:
         image.process_image_full()'''
 
-
-# Create the sub folders for image storage
-def make_sub_paths(): #todo delete if not used?
-    # define the name of the directory to be created
-    path = ["/prepro", "/ndvi", "/cmap"]
-    for p in path:
-        os.mkdir(p)
-        '''try:
-            os.mkdir(p)
-        except OSError:
-            print("Creation of the directory %s failed" % p)
-        else:
-            print("Successfully created the directory %s " % p)'''
 
 if __name__ == "__main__":
     #app.run(host="0.0.0.0")
