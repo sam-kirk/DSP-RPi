@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 from imutils import contours
 from skimage import measure
 import imutils
+from collections import Counter
 
 
 class Image:
@@ -60,7 +61,8 @@ class Image:
         # Save as binary cmap for greyscale
         # vmin = 0 as NDVI below 0 suggests area is not biomass (likely water)
         # vmax as max value to get most out of the cmap scale todo may not be good idea for comparisons
-        plt.imsave(destination, self.ndvi_bitmap, cmap="binary", vmin=0.0, vmax=np.amax(self.ndvi_bitmap))
+        # plt.imsave(destination, self.ndvi_bitmap, cmap="binary", vmin=0.0, vmax=np.amax(self.ndvi_bitmap))
+        plt.imsave(destination, self.ndvi_bitmap, cmap="binary")
 
     # apply the colourmap to ndvi image for better readability
     def create_cmap_bitmap(self):
@@ -87,7 +89,7 @@ class Image:
         self.create_cmap_bitmap()
         self.save_cmap_bitmap(save_path + "_cmap.png")
 
-    def analyse_image(self):
+    def object_detection(self):
         # Based on code by Adrian Rosebrock 2016 accessed March 2021 at
         # https://www.pyimagesearch.com/2016/10/31/detecting-multiple-bright-spots-in-an-image-with-python-and-opencv/
 
@@ -112,6 +114,7 @@ class Image:
         labels = measure.label(thresh, connectivity=2, background=0)  # image with labels
         mask = np.zeros(thresh.shape, dtype="uint8")
 
+
         # loop over the unique components
         for label in np.unique(labels):
 
@@ -123,28 +126,54 @@ class Image:
             label_mask = np.zeros(thresh.shape, dtype="uint8")
             label_mask[labels == label] = 255
             num_pixels = cv2.countNonZero(label_mask)
-            # if the number of pixels in the component is sufficiently
-            # large, then add it to our mask of "large blobs"
-            if num_pixels > 300:  # number of pixels to be a large blob
+            # if the number of pixels in the component is sufficiently large
+            # then add it to our mask of "large blobs"
+            if num_pixels > 300:  # number of pixels to be a large blob todo parametrise this?
                 mask = cv2.add(mask, label_mask)
+
+            #if num_pixels > 300:  # number of pixels to be a large blob todo parametrise this?
+                #mask = cv2.add(mask, label_mask)
+
 
         # find the contours in the mask, then sort them from left to
         # right
-        cnts = cv2.findContours(mask.copy(), cv2.RETR_EXTERNAL,
-                                cv2.CHAIN_APPROX_SIMPLE)
+        cnts = cv2.findContours(mask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         cnts = imutils.grab_contours(cnts)
-        cnts = contours.sort_contours(cnts)[0]
+        # sort contours by area (largest first)
+        cnts = sorted(contours.sort_contours(cnts)[0], key=lambda x: cv2.contourArea(x), reverse=True)
+        print('cnts---',cnts)
         # loop over the contours
-        # todo make large area rectangle make small 'anomalies' circles with different color and name, how do they look without blur?
+        # todo how do they look without blur?
         for (i, c) in enumerate(cnts):
-            # draw the bright spot on the image
-            (x, y, w, h) = cv2.boundingRect(c)
-            ((cX, cY), radius) = cv2.minEnclosingCircle(c)
-            cv2.circle(image, (int(cX), int(cY)), int(radius),(0, 0, 255), 3)
-            cv2.putText(image, "#{} anomaly".format(i + 1), (x, y - 15),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 0, 255), 2)
+            # take the largest contour by area as main crop
+            if i == 0:
+                cv2.drawContours(image, [c], 0, (255, 0, 0), 3)
+                (x, y, w, h) = cv2.boundingRect(c)
+                cv2.putText(image, "#{} main crop".format(i + 1), (x + h//2, y + h//2),
+                            cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
+            else:
+                # draw the bright spot on the image
+                (x, y, w, h) = cv2.boundingRect(c)
+                ((cX, cY), radius) = cv2.minEnclosingCircle(c)
+                cv2.drawContours(image, [c], 0, (0, 0, 200), 3)
+                cv2.circle(image, (int(cX), int(cY)), int(radius),(0, 0, 255), 3)
+                cv2.putText(image, "#{} anomaly".format(i + 1), (x, y - 15),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
 
-        cv2.imshow("beep", image)
+
+        cv2.imshow("Blur", blurred)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+
+        cv2.imshow("Thresh", thresh)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+
+        cv2.imshow("Mask", mask)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+
+        cv2.imshow("Highlighted Image", image)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
 
