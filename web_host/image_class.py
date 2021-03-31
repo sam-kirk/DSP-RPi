@@ -91,39 +91,42 @@ class Image:
         # Based on code by Adrian Rosebrock 2016 accessed March 2021 at
         # https://www.pyimagesearch.com/2016/10/31/detecting-multiple-bright-spots-in-an-image-with-python-and-opencv/
 
-        # construct the argument parse and parse the arguments
+        # read in file convert to a cv2 grayscale format
         image = cv2.imread(self.filepath + self.name.split(".")[0] + "_ndvi.png")
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        # blurring reduces image noise
         blurred = cv2.GaussianBlur(gray, (11, 11), 0)
 
         # threshold the image to reveal light regions in the
-        # blurred image
+        # cv2 image type is 8 bit encoding i.e. 0-255
+        # if the pixel >= 200 it becomes white if pixel < 200 it is black
+        # [0] returns threshold value [1] returns bitmap
         thresh = cv2.threshold(blurred, 200, 255, cv2.THRESH_BINARY)[1]
 
-        # perform a series of erosions and dilations to remove
-        # any small blobs of noise from the thresholded image
+        # perform a series of erosions and dilations to remove small blobs from the thresholded image
         thresh = cv2.erode(thresh, None, iterations=2)
         thresh = cv2.dilate(thresh, None, iterations=4)
 
-        # perform a connected component analysis on the thresholded
-        # image, then initialize a mask to store only the "large"
-        # components
-        labels = measure.label(thresh, connectivity=1, background=0)
+        # perform a connected component analysis on the thresholded image
+        # then initialize a mask to store only the "large" components
+        labels = measure.label(thresh, connectivity=2, background=0)  # image with labels
         mask = np.zeros(thresh.shape, dtype="uint8")
+
         # loop over the unique components
         for label in np.unique(labels):
+
             # if this is the background label, ignore it
             if label == 0:
                 continue
             # otherwise, construct the label mask and count the
             # number of pixels
-            labelMask = np.zeros(thresh.shape, dtype="uint8")
-            labelMask[labels == label] = 255
-            numPixels = cv2.countNonZero(labelMask)
+            label_mask = np.zeros(thresh.shape, dtype="uint8")
+            label_mask[labels == label] = 255
+            num_pixels = cv2.countNonZero(label_mask)
             # if the number of pixels in the component is sufficiently
             # large, then add it to our mask of "large blobs"
-            if numPixels > 300:
-                mask = cv2.add(mask, labelMask)
+            if num_pixels > 300:  # number of pixels to be a large blob
+                mask = cv2.add(mask, label_mask)
 
         # find the contours in the mask, then sort them from left to
         # right
@@ -132,14 +135,13 @@ class Image:
         cnts = imutils.grab_contours(cnts)
         cnts = contours.sort_contours(cnts)[0]
         # loop over the contours
+        # todo make large area rectangle make small 'anomalies' circles with different color and name, how do they look without blur?
         for (i, c) in enumerate(cnts):
-            print('beep beep')
             # draw the bright spot on the image
             (x, y, w, h) = cv2.boundingRect(c)
             ((cX, cY), radius) = cv2.minEnclosingCircle(c)
-            cv2.circle(image, (int(cX), int(cY)), int(radius),
-                       (0, 0, 255), 3)
-            cv2.putText(image, "#{}".format(i + 1), (x, y - 15),
+            cv2.circle(image, (int(cX), int(cY)), int(radius),(0, 0, 255), 3)
+            cv2.putText(image, "#{} anomaly".format(i + 1), (x, y - 15),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 0, 255), 2)
 
         cv2.imshow("beep", image)
