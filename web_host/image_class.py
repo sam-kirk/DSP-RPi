@@ -72,17 +72,58 @@ class Image:
 
     # apply the colourmap to ndvi image for better readability
     def create_cmap_bitmap(self):
-        img = cv2.imread(self.filepath + self.name.split(".")[0] + "_ndvi-c.png")
-        # useful img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        cv2.imshow('img', img)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
-
         # approximate health based on ndvi value
         vh = 0.66 * 255
         h = 0.33 * 255
         uh = 0
         d = -1
+
+        # img = cv2.imread(self.filepath + self.name.split(".")[0] + "_ndvi-c.png")
+        img = cv2.imread(self.filepath + self.name.split(".")[0] + "_ndvi-g.png")
+        print(img.shape)
+        img_c = cv2.imread(self.filepath + self.name.split(".")[0] + "_ndvi-c.png")
+        img_g = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        img_g_blur = cv2.GaussianBlur(img_g, (35, 35), 0)
+
+        img_g_blur = cv2.erode(img_g_blur, None, iterations=2)
+        img_g_blur = cv2.dilate(img_g_blur, None, iterations=4)
+
+        gray_vh = cv2.inRange(img_g_blur, vh, 255)
+        gray_h = cv2.inRange(img_g_blur, h, vh)
+        gray_uh = cv2.inRange(img_g_blur, uh, h)
+        gray_d = cv2.inRange(img_g_blur, d, uh)
+
+        # find the contours in the mask, then sort them from left to right
+        cnts_vh = cv2.findContours(gray_vh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        cnts_vh = imutils.grab_contours(cnts_vh)
+        # sort contours by area (largest first)
+        # loop over the contours
+        # todo how do they look without blur?
+        print(img.shape)
+        overlay = np.zeros(img.shape, dtype="uint8")
+        output = np.zeros(img.shape, dtype="uint8")
+        for (i, c) in enumerate(cnts_vh):
+            # take the largest contour by area as main crop
+            # cv2.drawContours(overlay, [c], 0, (255, 0, 0), 3)
+            (x, y, w, h) = cv2.boundingRect(c)
+            cv2.fillPoly(overlay, pts=[c], color=(0, 255, 0))
+            cv2.putText(img, "#{} V. Healthy".format(i + 1), (x + h // 2, y + h // 2),
+                        cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
+
+        alpha = 0.2
+        cv2.addWeighted(overlay, alpha, img, 1-alpha, 0, output)
+
+        cv2.imshow("Img b", output)
+        cv2.waitKey(0)
+        '''cv2.imshow("Img vh", gray_vh)
+        cv2.waitKey(0)
+        cv2.imshow("Img h", gray_h)
+        cv2.waitKey(0)
+        cv2.imshow("Img uh", gray_uh)
+        cv2.waitKey(0)'''
+        cv2.destroyAllWindows()
+
+
 
 
     def save_cmap_bitmap(self, new_filepath):
@@ -129,8 +170,6 @@ class Image:
         # then initialize a mask to store only the "large" components
         labels = measure.label(thresh, connectivity=2, background=0)  # image with labels
         mask = np.zeros(thresh.shape, dtype="uint8")
-
-
         # loop over the unique components
         for label in np.unique(labels):
 
@@ -147,12 +186,7 @@ class Image:
             if num_pixels > 300:  # number of pixels to be a large blob todo parametrise this?
                 mask = cv2.add(mask, label_mask)
 
-            #if num_pixels > 300:  # number of pixels to be a large blob todo parametrise this?
-                #mask = cv2.add(mask, label_mask)
-
-
-        # find the contours in the mask, then sort them from left to
-        # right
+        # find the contours in the mask, then sort them from left to right
         cnts = cv2.findContours(mask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         cnts = imutils.grab_contours(cnts)
         # sort contours by area (largest first)
