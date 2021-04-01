@@ -54,43 +54,36 @@ class Image:
 
         # ndvi equation
         ndvi_bitmap = (r_ch - b_ch) / r_b_sum
+
         self.ndvi_bitmap = ndvi_bitmap.tolist()  # todo to list needed?
 
-    def save_ndvi_bitmap(self, new_filepath):
-        destination = new_filepath
-        # Save as binary cmap for greyscale
-        # vmin = 0 as NDVI below 0 suggests area is not biomass (likely water)
-        # vmax as max value to get most out of the cmap scale todo may not be good idea for comparisons
-        # plt.imsave(destination, self.ndvi_bitmap, cmap="binary", vmin=0.0, vmax=np.amax(self.ndvi_bitmap))
-        plt.imsave(destination, self.ndvi_bitmap, cmap="binary", vmin=-1, vmax=1)
+    def save_ndvi_bitmap(self, destination):
+        # easiest way to convert to cv2 type is through write then read todo could be inefficient
+        # save original ndvi bitmap
+        plt.imsave(destination, self.ndvi_bitmap)
+        # read the bitmap as a cv2 type
+        img = cv2.imread(destination)
+        # invert the image for colour mapping
+        img = cv2.bitwise_not(img)
+        # save the cv2 image as colour map
+        cv2.imwrite(self.filepath + self.name.split('.')[0] + '_ndvi-c.png', img)
+        # overwrite the original image with a normalised grayscale image
+        plt.imsave(destination, self.ndvi_bitmap, cmap="gray_r", vmin=0, vmax=np.amax(self.ndvi_bitmap))
 
     # apply the colourmap to ndvi image for better readability
     def create_cmap_bitmap(self):
-        img = cv2.imread(self.filepath + self.name.split(".")[0] + "_ndvi.png")
-        img = cv2.normalize(img, normalizedData_l1)
-        cv2.imshow('v', img)
+        img = cv2.imread(self.filepath + self.name.split(".")[0] + "_ndvi-c.png")
+        # useful img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        cv2.imshow('img', img)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
+
         # approximate health based on ndvi value
         vh = 0.66 * 255
         h = 0.33 * 255
+        uh = 0
+        d = -1
 
-        maskv=cv2.inRange(img, (vh,vh,vh), (255,255,255))
-        maskh=cv2.inRange(img, (h, h, h), (vh, vh, vh))
-        mask=cv2.inRange(img, (0, 0, 0), (h, h, h))
-
-
-        cv2.imshow('maskv', maskv)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
-
-        cv2.imshow('maskh', maskh)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
-
-        cv2.imshow('mask', mask)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
 
     def save_cmap_bitmap(self, new_filepath):
         destination = new_filepath
@@ -107,17 +100,17 @@ class Image:
         self.save_prepro_bitmap(save_path + "_prepro.png")
 
         self.create_ndvi_bitmap()
-        self.save_ndvi_bitmap(save_path + "_ndvi.png")
+        self.save_ndvi_bitmap(save_path + "_ndvi-g.png")
 
         self.create_cmap_bitmap()
-        self.save_cmap_bitmap(save_path + "_cmap.png")
+        #self.save_cmap_bitmap(save_path + "_cmap.png")
 
     def object_detection(self):
         # Based on code by Adrian Rosebrock 2016 accessed March 2021 at
         # https://www.pyimagesearch.com/2016/10/31/detecting-multiple-bright-spots-in-an-image-with-python-and-opencv/
 
         # read in file convert to a cv2 grayscale format
-        image = cv2.imread(self.filepath + self.name.split(".")[0] + "_ndvi.png")
+        image = cv2.imread(self.filepath + self.name.split(".")[0] + "_ndvi-g.png")
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         # blurring reduces image noise
         blurred = cv2.GaussianBlur(gray, (11, 11), 0)
