@@ -79,9 +79,8 @@ class Image:
         cbar = fig.colorbar(cax, ticks=[0, 255])
         cbar.ax.set_yticklabels(['<0', '1'])
         plt.axis('off')
+        plt.savefig(self.filepath + self.name.split('.')[0] + '_ndvi-c-bar.png')
         plt.show()
-
-        fig.savefig(self.filepath + self.name.split('.')[0] + '_ndvi-c-bar.png', img)
 
     # apply the colourmap to ndvi image for better readability
     def create_cmap_bitmap(self):
