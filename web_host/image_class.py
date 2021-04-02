@@ -71,15 +71,16 @@ class Image:
         plt.imsave(destination, self.ndvi_bitmap, cmap="gray_r", vmin=0, vmax=np.amax(self.ndvi_bitmap))
 
     def add_colour_bar(self):
-        img = cv2.imread(self.filepath + self.name.split('.')[0] + '_ndvi-c.png', 0)
+        img = cv2.imread(self.filepath + self.name.split('.')[0] + '_ndvi-c.png')
         fig, ax = plt.subplots()
         cax = ax.imshow(img, vmin=0, vmax=255)
         ax.set_title('NDVI Image')
         # Add colourbar
-        cbar = fig.colorbar(cax, ticks=[0, 255])
-        cbar.ax.set_yticklabels(['<0', '1'])
+        cbar = fig.colorbar(cax, ticks=[0, 0.33*255, 0.66*255, 255], shrink=0.5)
+        cbar.ax.set_yticklabels(['<0', '0.33', '0.66', '1'])
         plt.axis('off')
-        plt.savefig(self.filepath + self.name.split('.')[0] + '_ndvi-c-bar.png')
+        plt.savefig(self.filepath + self.name.split('.')[0] + '_ndvi-c-bar.png', format='png', dpi=800)
+        # resize image try and preserve color
         plt.show()
 
     # apply the colourmap to ndvi image for better readability
