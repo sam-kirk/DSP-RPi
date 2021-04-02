@@ -70,6 +70,19 @@ class Image:
         # overwrite the original image with a normalised grayscale image
         plt.imsave(destination, self.ndvi_bitmap, cmap="gray_r", vmin=0, vmax=np.amax(self.ndvi_bitmap))
 
+    def add_colour_bar(self):
+        img = cv2.imread(self.filepath + self.name.split('.')[0] + '_ndvi-c.png', 0)
+        fig, ax = plt.subplots()
+        cax = ax.imshow(img, vmin=0, vmax=255)
+        ax.set_title('NDVI Image')
+        # Add colourbar
+        cbar = fig.colorbar(cax, ticks=[0, 255])
+        cbar.ax.set_yticklabels(['<0', '1'])
+        plt.axis('off')
+        plt.show()
+
+        fig.savefig(self.filepath + self.name.split('.')[0] + '_ndvi-c-bar.png', img)
+
     # apply the colourmap to ndvi image for better readability
     def create_cmap_bitmap(self):
         # approximate health based on ndvi value
@@ -78,53 +91,57 @@ class Image:
         uh = 0
         d = -1
 
-        # img = cv2.imread(self.filepath + self.name.split(".")[0] + "_ndvi-c.png")
+        # get an original grayscale image for colouring
         img = cv2.imread(self.filepath + self.name.split(".")[0] + "_ndvi-g.png")
-        print(img.shape)
-        img_c = cv2.imread(self.filepath + self.name.split(".")[0] + "_ndvi-c.png")
+        # img_c = cv2.imread(self.filepath + self.name.split(".")[0] + "_ndvi-c.png")
+        # get a grayscale for creating masks
         img_g = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        # blur to reduce noise and add softness to edges
         img_g_blur = cv2.GaussianBlur(img_g, (35, 35), 0)
 
+        # erode and dilate to remove small blobs
         img_g_blur = cv2.erode(img_g_blur, None, iterations=2)
         img_g_blur = cv2.dilate(img_g_blur, None, iterations=4)
 
-        gray_vh = cv2.inRange(img_g_blur, vh, 255)
-        gray_h = cv2.inRange(img_g_blur, h, vh)
-        gray_uh = cv2.inRange(img_g_blur, uh, h)
-        gray_d = cv2.inRange(img_g_blur, d, uh)
+        # create an iterable list of masks to overlay
+        masks = [cv2.inRange(img_g_blur, vh, 255), cv2.inRange(img_g_blur, h, vh), cv2.inRange(img_g_blur, uh, h),
+                 cv2.inRange(img_g_blur, d, uh)]
 
-        # find the contours in the mask, then sort them from left to right
-        cnts_vh = cv2.findContours(gray_vh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        cnts_vh = imutils.grab_contours(cnts_vh)
-        # sort contours by area (largest first)
-        # loop over the contours
-        # todo how do they look without blur?
-        print(img.shape)
+        # create label lists for formatting
+        colours = [(0, 255, 0), (0, 255, 180), (0, 0, 255), (0, 0, 0)]
+        labels = ["V. Healthy", "Healthy", "Unhealthy", "Dead/Inanimate"]
+
         overlay = np.zeros(img.shape, dtype="uint8")
-        output = np.zeros(img.shape, dtype="uint8")
-        for (i, c) in enumerate(cnts_vh):
-            # take the largest contour by area as main crop
-            # cv2.drawContours(overlay, [c], 0, (255, 0, 0), 3)
-            (x, y, w, h) = cv2.boundingRect(c)
-            cv2.fillPoly(overlay, pts=[c], color=(0, 255, 0))
-            cv2.putText(img, "#{} V. Healthy".format(i + 1), (x + h // 2, y + h // 2),
-                        cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
 
-        alpha = 0.2
+        for (i, mask) in enumerate(masks):
+            # find the contours in the mask
+            mask = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            mask = imutils.grab_contours(mask)
+
+            # if no contours continue
+            if len(mask) == 0:
+                continue
+
+            # sort contours by size so only biggest of colour is labeled
+            mask = sorted(contours.sort_contours(mask)[0], key=lambda x: cv2.contourArea(x), reverse=True)
+
+            for (j, c) in enumerate(mask):
+                # cv2.drawContours(overlay, [c], 0, (255, 0, 0), 3)
+                # bounding rectangle for text
+                (x, y, w, h) = cv2.boundingRect(c)
+                # fill contour with colour
+                cv2.fillPoly(overlay, pts=[c], color=colours[i])
+                if j == 0:
+                    cv2.putText(overlay, labels[i], (x + h // 2, y + h // 2),
+                                cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
+
+        output = np.zeros(img.shape, dtype="uint8")
+        alpha = 0.6
         cv2.addWeighted(overlay, alpha, img, 1-alpha, 0, output)
 
-        cv2.imshow("Img b", output)
+        cv2.imshow("Img", output)
         cv2.waitKey(0)
-        '''cv2.imshow("Img vh", gray_vh)
-        cv2.waitKey(0)
-        cv2.imshow("Img h", gray_h)
-        cv2.waitKey(0)
-        cv2.imshow("Img uh", gray_uh)
-        cv2.waitKey(0)'''
         cv2.destroyAllWindows()
-
-
-
 
     def save_cmap_bitmap(self, new_filepath):
         destination = new_filepath
@@ -132,7 +149,6 @@ class Image:
 
     # function takes a raw image and populates all the values and saves them in the directory
     def process_image_full(self):
-
         save_path = self.filepath + self.name.split(".")[0]
 
         self.set_raw_bmap()
@@ -210,7 +226,6 @@ class Image:
                 cv2.putText(image, "#{} anomaly".format(i + 1), (x, y - 15),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
 
-
         cv2.imshow("Blur", blurred)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
@@ -227,8 +242,4 @@ class Image:
         cv2.waitKey(0)
         cv2.destroyAllWindows()
 
-    @staticmethod
-    def test():
-        print("beepboop")
-        return True
 
