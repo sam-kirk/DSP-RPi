@@ -72,7 +72,8 @@ def mock_function(images):  # todo rename
     print("---- Here")
     #images[0].process_image_full()
     #images[0].object_detection()
-    images[0].create_cmap_bitmap()
+    images[0].main_crop_analysis()
+    #images[0].create_cmap_bitmap()
     #images[0].add_colour_bar()
     '''for image in images:
         image.process_image_full()'''

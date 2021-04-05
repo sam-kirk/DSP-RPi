@@ -214,6 +214,7 @@ class Image:
             if i == 0:
                 # Bounding rectangle for text placement
                 (x, y, w, h) = cv2.boundingRect(c)
+
                 # Convex hull creates a contour from another contour
                 # It is used to determine if the crop space is ragged and therefore has a large edge effect
                 # see https://docs.opencv.org/3.4/d3/dc0/group__imgproc__shape.html#ga014b28e56cb8854c0de4a211cb2be656
@@ -255,10 +256,7 @@ class Image:
         cv2.waitKey(0)
         cv2.destroyAllWindows()
 
-    def object_detection2(self):
-        # Based on code by Adrian Rosebrock 2016 accessed March 2021 at
-        # https://www.pyimagesearch.com/2016/10/31/detecting-multiple-bright-spots-in-an-image-with-python-and-opencv/
-
+    def main_crop_analysis(self):
         # read in file convert to a cv2 grayscale format
         image = cv2.imread(self.filepath + self.name.split(".")[0] + "_ndvi-g.png")
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -300,39 +298,18 @@ class Image:
         cnts = imutils.grab_contours(cnts)
         # sort contours by area (largest first)
         cnts = sorted(contours.sort_contours(cnts)[0], key=lambda x: cv2.contourArea(x), reverse=True)
-        print('cnts---',cnts)
         # loop over the contours
         # todo how do they look without blur?
         for (i, c) in enumerate(cnts):
             # take the largest contour by area as main crop
             if i == 0:
-                cv2.drawContours(image, [c], 0, (255, 0, 0), 3)
+                # get bounding rectangle to crop to
                 (x, y, w, h) = cv2.boundingRect(c)
-                cv2.putText(image, "#{} main crop".format(i + 1), (x + h//2, y + h//2),
-                            cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
-            else:
-                # draw the bright spot on the image
-                (x, y, w, h) = cv2.boundingRect(c)
-                ((cX, cY), radius) = cv2.minEnclosingCircle(c)
-                cv2.drawContours(image, [c], 0, (0, 0, 200), 3)
-                cv2.circle(image, (int(cX), int(cY)), int(radius),(0, 0, 255), 3)
-                cv2.putText(image, "#{} anomaly".format(i + 1), (x, y - 15),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
-
-        cv2.imshow("Blur", blurred)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
-
-        cv2.imshow("Thresh", thresh)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
-
-        cv2.imshow("Mask", mask)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
-
-        cv2.imshow("Highlighted Image", image)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
+                # remove indexes that are outside the region of interest
+                roi = image[y:y+h, x:x+w]
 
 
+
+                cv2.imshow("ROI", roi)
+                cv2.waitKey(0)
+                cv2.destroyAllWindows()
