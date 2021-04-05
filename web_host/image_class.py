@@ -207,6 +207,99 @@ class Image:
         cnts = imutils.grab_contours(cnts)
         # sort contours by area (largest first)
         cnts = sorted(contours.sort_contours(cnts)[0], key=lambda x: cv2.contourArea(x), reverse=True)
+        # loop over the contours
+        # todo how do they look without blur?
+        for (i, c) in enumerate(cnts):
+            # take the largest contour by area as main crop
+            if i == 0:
+                # Bounding rectangle for text placement
+                (x, y, w, h) = cv2.boundingRect(c)
+                # Convex hull creates a contour from another contour
+                # It is used to determine if the crop space is ragged and therefore has a large edge effect
+                # see https://docs.opencv.org/3.4/d3/dc0/group__imgproc__shape.html#ga014b28e56cb8854c0de4a211cb2be656
+                c_h = cv2.convexHull(c)
+                cv2.drawContours(image, [c], 0, (255, 0, 0), 3)
+                cv2.drawContours(image, [c_h], 0, (255, 0, 200), 3)
+                # match = cv2.matchShapes(c, c_h, 1, 0.0) alternative using moments
+                perimeter_area_ratio_c = cv2.arcLength(c, True) / cv2.contourArea(c)
+                perimeter_area_ratio_c_h = cv2.arcLength(c_h, True) / cv2.contourArea(c_h)
+                match = (perimeter_area_ratio_c/perimeter_area_ratio_c_h)-1
+                cv2.putText(image, "#" + str(i+1) + " main crop", (x + w//2, y + h//2),
+                            cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
+                cv2.putText(image, "edge effect: " + str(round((1 - match) * 100, 1)) + "%",
+                            (x + w // 2, (y + h // 2)+30),
+                            cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 200), 2)
+
+            else:
+                # draw the bright spot on the image
+                (x, y, w, h) = cv2.boundingRect(c)
+                ((cX, cY), radius) = cv2.minEnclosingCircle(c)
+                cv2.drawContours(image, [c], 0, (0, 0, 200), 3)
+                cv2.circle(image, (int(cX), int(cY)), int(radius),(0, 0, 255), 3)
+                cv2.putText(image, "#{} anomaly".format(i + 1), (x, y - 15),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
+
+        '''cv2.imshow("Blur", blurred)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+
+        cv2.imshow("Thresh", thresh)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+
+        cv2.imshow("Mask", mask)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()'''
+
+        cv2.imshow("Highlighted Image", image)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+
+    def object_detection2(self):
+        # Based on code by Adrian Rosebrock 2016 accessed March 2021 at
+        # https://www.pyimagesearch.com/2016/10/31/detecting-multiple-bright-spots-in-an-image-with-python-and-opencv/
+
+        # read in file convert to a cv2 grayscale format
+        image = cv2.imread(self.filepath + self.name.split(".")[0] + "_ndvi-g.png")
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        # blurring reduces image noise
+        blurred = cv2.GaussianBlur(gray, (11, 11), 0)
+
+        # threshold the image to reveal light regions in the
+        # cv2 image type is 8 bit encoding i.e. 0-255
+        # if the pixel >= 200 it becomes white if pixel < 200 it is black
+        # [0] returns threshold value [1] returns bitmap
+        thresh = cv2.threshold(blurred, 200, 255, cv2.THRESH_BINARY)[1]
+
+        # perform a series of erosions and dilations to remove small blobs from the thresholded image
+        thresh = cv2.erode(thresh, None, iterations=2)
+        thresh = cv2.dilate(thresh, None, iterations=4)
+
+        # perform a connected component analysis on the thresholded image
+        # then initialize a mask to store only the "large" components
+        labels = measure.label(thresh, connectivity=2, background=0)  # image with labels
+        mask = np.zeros(thresh.shape, dtype="uint8")
+        # loop over the unique components
+        for label in np.unique(labels):
+
+            # if this is the background label, ignore it
+            if label == 0:
+                continue
+            # otherwise, construct the label mask and count the
+            # number of pixels
+            label_mask = np.zeros(thresh.shape, dtype="uint8")
+            label_mask[labels == label] = 255
+            num_pixels = cv2.countNonZero(label_mask)
+            # if the number of pixels in the component is sufficiently large
+            # then add it to our mask of "large blobs"
+            if num_pixels > 300:  # number of pixels to be a large blob todo parametrise this?
+                mask = cv2.add(mask, label_mask)
+
+        # find the contours in the mask, then sort them from left to right
+        cnts = cv2.findContours(mask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        cnts = imutils.grab_contours(cnts)
+        # sort contours by area (largest first)
+        cnts = sorted(contours.sort_contours(cnts)[0], key=lambda x: cv2.contourArea(x), reverse=True)
         print('cnts---',cnts)
         # loop over the contours
         # todo how do they look without blur?
