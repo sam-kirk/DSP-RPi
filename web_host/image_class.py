@@ -303,13 +303,26 @@ class Image:
         for (i, c) in enumerate(cnts):
             # take the largest contour by area as main crop
             if i == 0:
+
+                mask = np.zeros_like(image)  # Create mask where white is what we want, black otherwise
+                cv2.drawContours(mask, [c], 0, 255, -1)  # Draw filled contour in mask
+                out = np.zeros_like(image)  # Extract out the object and place into output image
+                out[mask == 255] = image[mask == 255]
+
+                # Now crop
                 # get bounding rectangle to crop to
                 (x, y, w, h) = cv2.boundingRect(c)
                 # remove indexes that are outside the region of interest
-                roi = image[y:y+h, x:x+w]
+                roi = out[y:y + h, x:x + w]
+
+                # Show the output image
+                cv2.imshow('ROI', roi)
+                cv2.waitKey(0)
+                cv2.destroyAllWindows()
+                '''
 
 
 
                 cv2.imshow("ROI", roi)
                 cv2.waitKey(0)
-                cv2.destroyAllWindows()
+                cv2.destroyAllWindows()'''
