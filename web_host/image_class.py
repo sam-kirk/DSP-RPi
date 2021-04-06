@@ -67,8 +67,17 @@ class Image:
         img = cv2.bitwise_not(img)
         # save the cv2 image as colour map
         cv2.imwrite(self.filepath + self.name.split('.')[0] + '_ndvi-c.png', img)
+
+        
+        img = cv2.subtract(img, (165), None)
+        img = cv2.multiply(img, (10), None)
+
+        cv2.imshow("Img", img)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
         # overwrite the original image with a normalised grayscale image
-        plt.imsave(destination, self.ndvi_bitmap, cmap="gray_r", vmin=0, vmax=np.amax(self.ndvi_bitmap))
+        cv2.imwrite(destination, img)
+        #plt.imsave(destination, self.ndvi_bitmap, cmap="gray_r", vmin=0, vmax=np.amax(self.ndvi_bitmap))
 
     def add_colour_bar(self):
         img = cv2.imread(self.filepath + self.name.split('.')[0] + '_ndvi-c.png')
