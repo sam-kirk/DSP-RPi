@@ -1,49 +1,86 @@
+# Based on code by Adrian Rosebrock 2016 accessed March 2021 at
+# https://www.pyimagesearch.com/2016/10/31/detecting-multiple-bright-spots-in-an-image-with-python-and-opencv/
+# see https://docs.opencv.org/3.4/d3/dc0/group__imgproc__shape.html#ga014b28e56cb8854c0de4a211cb2be656
+# Based on code by Alexander Mordvintsev & Abid K. 2013 found at:
+# https://opencv-python-tutroals.readthedocs.io/en/latest/py_tutorials/py_feature2d/py_feature_homography/py_feature_homography.html
+
 import cv2
 import numpy as np
-import matplotlib
 import matplotlib.pyplot as plt
 from imutils import contours
 from skimage import measure
 import imutils
-from collections import Counter
+
+'''
+cv2.imshow("Img", output)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
+'''
+
+# constants
+FILE_TYPE = ".png"
+BLOB_SIZE = 300
+
+# name tails for consistent naming conventions
+PREPRO_NAME_TAIL = "_prepro"
+NDVI_COLOUR_NAME_TAIL = "_ndvi-c"
+NDVI_GRAY_NAME_TAIL = "_ndvi-g"
+NDVI_COLOURBAR_NAME_TAIL = "_cbar"
+NDVI_COLOUR_MAP_NAME_TAIL = "_cmap"
+NDVI_OBJECTS_NAME_TAIL = "_objects"
+NDVI_MATCH_NAME_TAIL = "_match"
+
+# threshold values for classifying areas as dead, unhealthy, healthy and very healthy
+VH = 0.66 * 255
+H = 0.33 * 255
+UH = 0.22 * 255
+D = 0
 
 
+# model class for image
+# contains functions for processing an individual image
 class Image:
     name = ""
-    filepath = ""
+    dir = ""
+    full_path = ""
     raw_bitmap = []
-    prepro_bitmap = []  # pre-processed bitmap
-    ndvi_bitmap = []
-    cmap_bitmap = []  # color mapped bitmap
 
-    # constructor only includes name and filepath as all other data is dependent on these values
-    def __init__(self, name, filepath):
+    # constructor only includes name and dir as all other data is dependent on these values
+    def __init__(self, name, dir):
         self.name = name
-        self.filepath = filepath
-        print(filepath + name + " object was created")
+        self.dir = dir
+        self.full_path = dir + name
+        print(dir + name + " object was created")
 
-    # load in the raw image as a bitmap
-    def set_raw_bmap(self):
-        full_path = self.filepath + self.name
-        self.raw_bitmap = cv2.imread(full_path)
+    # adds a new tail to the end of the image name e.g. foo.png --> foo_tail.png
+    # params - tail:string
+    # returns - new_name:string
+    def attach_name_tail(self, tail):
+        # new_name = self.dir + self.name.split(".")[0] + tail + ".png" todo remove?
+        new_name = self.full_path.split(".")[0] + tail + FILE_TYPE
+        return new_name
 
-    # pre-process the bitmap for better analysis
-    def create_prepro_bitmap(self):
-        prepro_bitmap = self.raw_bitmap
-        self.prepro_bitmap = prepro_bitmap
+    # reads in original image pre-processes it then saves it with a modified name
+    # params - None
+    # returns - None
+    def preprocess_image(self):
+        # read in image
+        img = cv2.imread(self.full_path)
+        # add preprocessing logic here if needed
+        # save as new image
+        cv2.imwrite(self.attach_name_tail(PREPRO_NAME_TAIL), img)
 
-    def save_prepro_bitmap(self, new_filepath):
-        destination = new_filepath
-        cv2.imwrite(destination, self.prepro_bitmap)
-
-    # calculate ndvi reading per pixel
-    def create_ndvi_bitmap(self):
+    # calculates the ndvi reading per pixel and saves both a colour and greyscale image
+    # the greyscale image can be normalised or not depending on the corresponding parameter 'normalise'
+    # params - normalise:boolean
+    # returns - None
+    def create_ndvi_images(self, normalise):
+        img = cv2.imread(self.attach_name_tail(PREPRO_NAME_TAIL))
         # split image into rgb channels
-        b_ch, g_ch, r_ch = cv2.split(self.prepro_bitmap)
+        b_ch, g_ch, r_ch = cv2.split(img)
 
         # with No IR filter red is considered to be mostly IR
-        # ss a blue filter was used all visible light is in the blue channel
-
+        # as a blue filter was used all visible light is in the blue channel
         # convert to array of floats for matrix calculations
         r_ch = np.asarray(r_ch).astype('float')
         b_ch = np.asarray(b_ch).astype('float')
@@ -51,36 +88,37 @@ class Image:
         # separate sum to allow for limit
         r_b_sum = (r_ch + b_ch)
         r_b_sum[r_b_sum == 0] = 0.01  # ensures no divide by zero errors and reduces noise
-
         # ndvi equation
         ndvi_bitmap = (r_ch - b_ch) / r_b_sum
 
-        self.ndvi_bitmap = ndvi_bitmap.tolist()  # todo to list needed?
-
-    def save_ndvi_bitmap(self, destination):
         # easiest way to convert to cv2 type is through write then read todo could be inefficient
         # save original ndvi bitmap
-        plt.imsave(destination, self.ndvi_bitmap)
+        save_path = self.attach_name_tail(NDVI_COLOUR_NAME_TAIL)
+        plt.imsave(save_path, ndvi_bitmap)
         # read the bitmap as a cv2 type
-        img = cv2.imread(destination)
-        # invert the image for colour mapping
+        img = cv2.imread(save_path)
+        # invert the image for colour correction
         img = cv2.bitwise_not(img)
-        # save the cv2 image as colour map
-        cv2.imwrite(self.filepath + self.name.split('.')[0] + '_ndvi-c.png', img)
+        # save the cv2 image as colour image
+        cv2.imwrite(save_path, img)
 
-        
-        img = cv2.subtract(img, (165), None)
-        img = cv2.multiply(img, (10), None)
+        # convert to gray image
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-        cv2.imshow("Img", img)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
-        # overwrite the original image with a normalised grayscale image
+        # normalise the image todo fine tune
+        if normalise:
+            img = cv2.subtract(img, (165), None)
+            img = cv2.multiply(img, (10), None)
+
+        # save normalised greyscale image
+        destination = self.attach_name_tail(NDVI_GRAY_NAME_TAIL)
         cv2.imwrite(destination, img)
-        #plt.imsave(destination, self.ndvi_bitmap, cmap="gray_r", vmin=0, vmax=np.amax(self.ndvi_bitmap))
 
-    def add_colour_bar(self):
-        img = cv2.imread(self.filepath + self.name.split('.')[0] + '_ndvi-c.png')
+    # uses matplotlib plt to create a new image with a colourbar for easier estimation of crop performance and saves it
+    # params - None
+    # returns - None
+    def create_colour_bar_image(self):  # todo neaten
+        img = cv2.imread(self.attach_name_tail(NDVI_COLOUR_NAME_TAIL))
         fig, ax = plt.subplots()
         cax = ax.imshow(img, vmin=0, vmax=255)
         ax.set_title('NDVI Image')
@@ -88,23 +126,18 @@ class Image:
         cbar = fig.colorbar(cax, ticks=[0, 0.33*255, 0.66*255, 255], shrink=0.5)
         cbar.ax.set_yticklabels(['<0', '0.33', '0.66', '1'])
         plt.axis('off')
-        plt.savefig(self.filepath + self.name.split('.')[0] + '_ndvi-c-bar.png', format='png', dpi=800)
-        # resize image try and preserve color
-        plt.show()
+        plt.savefig(self.dir + self.name.split('.')[0] + '_ndvi-c-bar.png', format='png', dpi=800)
+        # plt.show()
 
-    # apply the colourmap to ndvi image for better readability
-    def create_cmap_bitmap(self):
-        # approximate health based on ndvi value
-        vh = 0.66 * 255
-        h = 0.33 * 255
-        uh = 0
-        d = -1
-
+    # apply a threshold colourmap to the ndvi image for quicker identification of crop health and save the  new image
+    # params - None
+    # returns - None
+    def create_cmap_image(self):
         # get an original grayscale image for colouring
-        img = cv2.imread(self.filepath + self.name.split(".")[0] + "_ndvi-g.png")
-        # img_c = cv2.imread(self.filepath + self.name.split(".")[0] + "_ndvi-c.png")
+        img = cv2.imread(self.attach_name_tail(NDVI_GRAY_NAME_TAIL))
         # get a grayscale for creating masks
         img_g = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
         # blur to reduce noise and add softness to edges
         img_g_blur = cv2.GaussianBlur(img_g, (35, 35), 0)
 
@@ -112,30 +145,30 @@ class Image:
         img_g_blur = cv2.erode(img_g_blur, None, iterations=2)
         img_g_blur = cv2.dilate(img_g_blur, None, iterations=4)
 
-        # create an iterable list of masks to overlay
-        masks = [cv2.inRange(img_g_blur, vh, 255), cv2.inRange(img_g_blur, h, vh), cv2.inRange(img_g_blur, uh, h),
-                 cv2.inRange(img_g_blur, d, uh)]
+        # create an iterable list of masks to overlay classified by dead, unhealthy, healthy and very healthy thresholds
+        masks = [cv2.inRange(img_g_blur, VH, 255), cv2.inRange(img_g_blur, H, VH), cv2.inRange(img_g_blur, UH, H),
+                 cv2.inRange(img_g_blur, D, UH)]
 
         # create label lists for formatting
-        colours = [(0, 255, 0), (0, 255, 180), (0, 0, 255), (0, 0, 0)]
-        labels = ["V. Healthy", "Healthy", "Unhealthy", "Dead/Inanimate"]
+        colours = [(0, 255, 0), (0, 255, 180), (0, 0, 255), (50, 50, 50)]
+        labels = ["Very Healthy", "Healthy", "Unhealthy", "Inanimate/Dead"]
 
+        # build the overlay that will be put on top of the image
         overlay = np.zeros(img.shape, dtype="uint8")
-
         for (i, mask) in enumerate(masks):
             # find the contours in the mask
             mask = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
             mask = imutils.grab_contours(mask)
 
-            # if no contours continue
+            # if no contours continue - the image may not necessarily contain all classifications
             if len(mask) == 0:
                 continue
 
             # sort contours by size so only biggest of colour is labeled
-            mask = sorted(contours.sort_contours(mask)[0], key=lambda x: cv2.contourArea(x), reverse=True)
+            mask = sorted(contours.sort_contours(mask)[0], key=lambda x: cv2.contourArea(x), reverse=True) # todo sometimes not visable
 
+            # for each contour in the mask add to overlay
             for (j, c) in enumerate(mask):
-                # cv2.drawContours(overlay, [c], 0, (255, 0, 0), 3)
                 # bounding rectangle for text
                 (x, y, w, h) = cv2.boundingRect(c)
                 # fill contour with colour
@@ -143,41 +176,28 @@ class Image:
                 if j == 0:
                     cv2.putText(overlay, labels[i], (x + h // 2, y + h // 2),
                                 cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
-
+        # apply overlay
         output = np.zeros(img.shape, dtype="uint8")
+        # higher alpha the more prominent the overlay
         alpha = 0.6
         cv2.addWeighted(overlay, alpha, img, 1-alpha, 0, output)
 
-        cv2.imshow("Img", output)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
+        cv2.imwrite(self.attach_name_tail(NDVI_COLOUR_MAP_NAME_TAIL), output)
 
-    def save_cmap_bitmap(self, new_filepath):
-        destination = new_filepath
-        plt.imsave(destination, self.cmap_bitmap, cmap="Greens_r")
-
-    # function takes a raw image and populates all the values and saves them in the directory
+    # run all the image processing functions todo last thing
+    # params - None
+    # returns - None
     def process_image_full(self):
-        save_path = self.filepath + self.name.split(".")[0]
+        print('beats')
 
-        self.set_raw_bmap()
-
-        self.create_prepro_bitmap()
-        self.save_prepro_bitmap(save_path + "_prepro.png")
-
-        self.create_ndvi_bitmap()
-        self.save_ndvi_bitmap(save_path + "_ndvi-g.png")
-
-        self.create_cmap_bitmap()
-        #self.save_cmap_bitmap(save_path + "_cmap.png")
-
-    def object_detection(self):
-        # Based on code by Adrian Rosebrock 2016 accessed March 2021 at
-        # https://www.pyimagesearch.com/2016/10/31/detecting-multiple-bright-spots-in-an-image-with-python-and-opencv/
-
+    # create a mask of crop objects from the greyscale image to identify main crop and anomalies
+    # params - None
+    # returns - None
+    def object_detection(self):  # todo needs softening
         # read in file convert to a cv2 grayscale format
-        image = cv2.imread(self.filepath + self.name.split(".")[0] + "_ndvi-g.png")
-        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        img = cv2.imread(self.attach_name_tail(NDVI_GRAY_NAME_TAIL))
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
         # blurring reduces image noise
         blurred = cv2.GaussianBlur(gray, (11, 11), 0)
 
@@ -195,9 +215,9 @@ class Image:
         # then initialize a mask to store only the "large" components
         labels = measure.label(thresh, connectivity=2, background=0)  # image with labels
         mask = np.zeros(thresh.shape, dtype="uint8")
+
         # loop over the unique components
         for label in np.unique(labels):
-
             # if this is the background label, ignore it
             if label == 0:
                 continue
@@ -208,7 +228,7 @@ class Image:
             num_pixels = cv2.countNonZero(label_mask)
             # if the number of pixels in the component is sufficiently large
             # then add it to our mask of "large blobs"
-            if num_pixels > 300:  # number of pixels to be a large blob todo parametrise this?
+            if num_pixels > BLOB_SIZE:  # number of pixels to be a large blob
                 mask = cv2.add(mask, label_mask)
 
         # find the contours in the mask, then sort them from left to right
@@ -216,8 +236,8 @@ class Image:
         cnts = imutils.grab_contours(cnts)
         # sort contours by area (largest first)
         cnts = sorted(contours.sort_contours(cnts)[0], key=lambda x: cv2.contourArea(x), reverse=True)
+
         # loop over the contours
-        # todo how do they look without blur?
         for (i, c) in enumerate(cnts):
             # take the largest contour by area as main crop
             if i == 0:
@@ -226,48 +246,39 @@ class Image:
 
                 # Convex hull creates a contour from another contour
                 # It is used to determine if the crop space is ragged and therefore has a large edge effect
-                # see https://docs.opencv.org/3.4/d3/dc0/group__imgproc__shape.html#ga014b28e56cb8854c0de4a211cb2be656
                 c_h = cv2.convexHull(c)
-                cv2.drawContours(image, [c], 0, (255, 0, 0), 3)
-                cv2.drawContours(image, [c_h], 0, (255, 0, 200), 3)
-                # match = cv2.matchShapes(c, c_h, 1, 0.0) alternative using moments
+                cv2.drawContours(img, [c], 0, (255, 0, 0), 3)
+                cv2.drawContours(img, [c_h], 0, (255, 0, 200), 3)
+
+                # calculate the perimeter area ration and represent the difference as a percentage
                 perimeter_area_ratio_c = cv2.arcLength(c, True) / cv2.contourArea(c)
                 perimeter_area_ratio_c_h = cv2.arcLength(c_h, True) / cv2.contourArea(c_h)
-                match = (perimeter_area_ratio_c/perimeter_area_ratio_c_h)-1
-                cv2.putText(image, "#" + str(i+1) + " main crop", (x + w//2, y + h//2),
+                match = 1-(perimeter_area_ratio_c_h/perimeter_area_ratio_c)
+
+                cv2.putText(img, "#" + str(i+1) + " main crop", (x + w//2, y + h//2),
                             cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
-                cv2.putText(image, "edge effect: " + str(round((1 - match) * 100, 1)) + "%",
+                cv2.putText(img, "edge effect: " + str(round((1 - match) * 100, 1)) + "%",
                             (x + w // 2, (y + h // 2)+30),
                             cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 200), 2)
 
             else:
-                # draw the bright spot on the image
+                # draw the bright spot on the image and label as an anomaly
                 (x, y, w, h) = cv2.boundingRect(c)
                 ((cX, cY), radius) = cv2.minEnclosingCircle(c)
-                cv2.drawContours(image, [c], 0, (0, 0, 200), 3)
-                cv2.circle(image, (int(cX), int(cY)), int(radius),(0, 0, 255), 3)
-                cv2.putText(image, "#{} anomaly".format(i + 1), (x, y - 15),
+                cv2.drawContours(img, [c], 0, (0, 0, 200), 3)
+                cv2.circle(img, (int(cX), int(cY)), int(radius),(0, 0, 255), 3)
+                cv2.putText(img, "#{} anomaly".format(i + 1), (x, y - 15),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
 
-        '''cv2.imshow("Blur", blurred)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
+        # self.quick_show(img)
+        cv2.imwrite(self.attach_name_tail(NDVI_OBJECTS_NAME_TAIL), img)
 
-        cv2.imshow("Thresh", thresh)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
-
-        cv2.imshow("Mask", mask)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()'''
-
-        cv2.imshow("Highlighted Image", image)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
-
-    def main_crop_analysis(self):
+    # extract only the main crop from the image for detailed analysis
+    # params - None
+    # returns - None
+    def main_crop_extraction(self):  # todo still blue
         # read in file convert to a cv2 grayscale format
-        image = cv2.imread(self.filepath + self.name.split(".")[0] + "_ndvi-g.png")
+        image = cv2.imread(self.attach_name_tail(NDVI_GRAY_NAME_TAIL))
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         # blurring reduces image noise
         blurred = cv2.GaussianBlur(gray, (11, 11), 0)
@@ -287,8 +298,8 @@ class Image:
         labels = measure.label(thresh, connectivity=2, background=0)  # image with labels
         mask = np.zeros(thresh.shape, dtype="uint8")
         # loop over the unique components
-        for label in np.unique(labels):
 
+        for label in np.unique(labels):
             # if this is the background label, ignore it
             if label == 0:
                 continue
@@ -299,7 +310,7 @@ class Image:
             num_pixels = cv2.countNonZero(label_mask)
             # if the number of pixels in the component is sufficiently large
             # then add it to our mask of "large blobs"
-            if num_pixels > 300:  # number of pixels to be a large blob todo parametrise this?
+            if num_pixels > BLOB_SIZE:  # number of pixels to be a large blob
                 mask = cv2.add(mask, label_mask)
 
         # find the contours in the mask, then sort them from left to right
@@ -308,7 +319,6 @@ class Image:
         # sort contours by area (largest first)
         cnts = sorted(contours.sort_contours(cnts)[0], key=lambda x: cv2.contourArea(x), reverse=True)
         # loop over the contours
-        # todo how do they look without blur?
         for (i, c) in enumerate(cnts):
             # take the largest contour by area as main crop
             if i == 0:
@@ -325,25 +335,14 @@ class Image:
                 roi = out[y:y + h, x:x + w]
 
                 # Show the output image
-                cv2.imshow('ROI', roi)
-                cv2.waitKey(0)
-                cv2.destroyAllWindows()
-                '''
+                self.quick_show(roi)
 
-
-
-                cv2.imshow("ROI", roi)
-                cv2.waitKey(0)
-                cv2.destroyAllWindows()'''
-
-    def similarity_features(self, second_img_path):
-        # Based on code by Alexander Mordvintsev & Abid K. 2013 found at:
-        # https://opencv-python-tutroals.readthedocs.io/en/latest/py_tutorials/py_feature2d/py_feature_homography/py_feature_homography.html
-
-        MIN_MATCH_COUNT = 10
-        FLANN_INDEX_KDTREE = 0
-
-        img1 = cv2.imread(self.filepath + self.name.split(".")[0] + "_ndvi-c.png")
+    # takes the 'self' image and one other (as a parameter) and compares their features
+    # if enough features are a good match the images are considered a match
+    # params - min_match_count:int
+    # returns - match:boolean
+    def is_match(self, second_img_path, min_match_count):
+        img1 = cv2.imread(self.attach_name_tail(NDVI_COLOUR_NAME_TAIL))
         img2 = cv2.imread(second_img_path)
 
         img1 = cv2.cvtColor(img1, cv2.COLOR_BGR2GRAY)
@@ -356,6 +355,7 @@ class Image:
         kp2, des2 = sift.detectAndCompute(img2, None)
 
         # feature matching
+        FLANN_INDEX_KDTREE = 0
         index_params = dict(algorithm=FLANN_INDEX_KDTREE, trees=5)
         search_params = dict(checks=50)
 
@@ -369,16 +369,19 @@ class Image:
             if m.distance < 0.7 * n.distance:
                 good.append(m)
 
-        if len(good) > MIN_MATCH_COUNT:
+        if len(good) > min_match_count:
             match = True
         else:
             match = False
 
         img3 = cv2.drawMatches(img1, kp1, img2, kp2, good, None, flags=2)
-        print(match)
 
-        cv2.imshow('Matches', img3)
+        #self.quick_show(img3)
+        cv2.imwrite(self.attach_name_tail(NDVI_MATCH_NAME_TAIL), img3)
+        return match
+
+    @staticmethod
+    def quick_show(img):
+        cv2.imshow("Img", img)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
-
-        return match

@@ -70,12 +70,14 @@ def load_image_set(f_path, term):
 
 def mock_function(images):  # todo rename
     print("---- Here")
-    images[0].process_image_full()
-    #images[0].object_detection()
-    #images[0].main_crop_analysis()
-    #images[0].create_cmap_bitmap()
-    #images[0].add_colour_bar()
-    #images[0].similarity_features('working_image_sets/raw_image_blue_filter copy/2021-03-25_14-07-57.png')
+    #images[0].preprocess_image()
+    #images[0].create_ndvi_images(True)
+    #images[0].create_colour_bar_image()
+    #images[0].create_cmap_image()
+    images[0].object_detection()
+    images[0].main_crop_extraction()
+    images[0].is_match('working_image_sets/raw_image_blue_filter copy/2021-03-25_14-07-57.png', 10)
+
     '''for image in images:
         image.process_image_full()'''
 
