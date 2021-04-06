@@ -28,6 +28,7 @@ NDVI_GRAY_NAME_TAIL = "_ndvi-g"
 NDVI_COLOURBAR_NAME_TAIL = "_cbar"
 NDVI_COLOUR_MAP_NAME_TAIL = "_cmap"
 NDVI_OBJECTS_NAME_TAIL = "_objects"
+NDVI_MAIN_CROP_NAME_TAIL = "_mcrop"
 NDVI_MATCH_NAME_TAIL = "_match"
 
 # threshold values for classifying areas as dead, unhealthy, healthy and very healthy
@@ -185,10 +186,16 @@ class Image:
         cv2.imwrite(self.attach_name_tail(NDVI_COLOUR_MAP_NAME_TAIL), output)
 
     # run all the image processing functions todo last thing
-    # params - None
+    # params - norm:boolean, comp_img_path:string, comps:int
     # returns - None
-    def process_image_full(self):
-        print('beats')
+    def process_image_full(self, norm, comp_img_path, comps):
+        self.preprocess_image()
+        self.create_ndvi_images(norm)
+        self.create_colour_bar_image()
+        self.create_cmap_image()
+        self.object_detection()
+        self.main_crop_extraction()
+        self.is_match(comp_img_path, comps)
 
     # create a mask of crop objects from the greyscale image to identify main crop and anomalies
     # params - None
@@ -276,7 +283,7 @@ class Image:
     # extract only the main crop from the image for detailed analysis
     # params - None
     # returns - None
-    def main_crop_extraction(self):  # todo still blue
+    def main_crop_extraction(self):
         # read in file convert to a cv2 grayscale format
         image = cv2.imread(self.attach_name_tail(NDVI_GRAY_NAME_TAIL))
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -323,19 +330,26 @@ class Image:
             # take the largest contour by area as main crop
             if i == 0:
 
-                mask = np.zeros_like(image)  # Create mask where white is what we want, black otherwise
+                '''mask = np.zeros_like(image)  # Create mask where white is what we want, black otherwise
                 cv2.drawContours(mask, [c], 0, 255, -1)  # Draw filled contour in mask
                 out = np.zeros_like(image)  # Extract out the object and place into output image
-                out[mask == 255] = image[mask == 255]
+                out[mask == x] = image[mask == x]
+                self.quick_show(out)'''
+
+                mask = np.zeros_like(image)  # Create mask where white is what we want, black otherwise
+                cv2.fillPoly(mask, [c], [255,255,255])  # Draw filled contour in mask
+                sel = mask != 255
+                image[sel] = 0
 
                 # Now crop
                 # get bounding rectangle to crop to
                 (x, y, w, h) = cv2.boundingRect(c)
                 # remove indexes that are outside the region of interest
-                roi = out[y:y + h, x:x + w]
+                roi = image[y:y + h, x:x + w]
 
                 # Show the output image
                 self.quick_show(roi)
+        cv2.imwrite(self.attach_name_tail(NDVI_MAIN_CROP_NAME_TAIL), roi)
 
     # takes the 'self' image and one other (as a parameter) and compares their features
     # if enough features are a good match the images are considered a match
