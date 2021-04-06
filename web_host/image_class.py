@@ -1,8 +1,18 @@
-# Based on code by Adrian Rosebrock 2016 accessed March 2021 at
-# https://www.pyimagesearch.com/2016/10/31/detecting-multiple-bright-spots-in-an-image-with-python-and-opencv/
-# see https://docs.opencv.org/3.4/d3/dc0/group__imgproc__shape.html#ga014b28e56cb8854c0de4a211cb2be656
-# Based on code by Alexander Mordvintsev & Abid K. 2013 found at:
-# https://opencv-python-tutroals.readthedocs.io/en/latest/py_tutorials/py_feature2d/py_feature_homography/py_feature_homography.html
+# Sam Kirk
+#
+# 06/04/2021
+#
+# UWE DSP Code
+# Class for processing NIR images from the PiNoIR module and creating and NDVI image for analysis
+#
+# With help from:
+# - Adrian Rosebrock 2016 at
+#   https://www.pyimagesearch.com/2016/10/31/detecting-multiple-bright-spots-in-an-image-with-python-and-opencv/
+#   accessed March 2021
+# - Alexander Mordvintsev & Abid K. 2013 at
+#   https://opencv-python-tutroals.readthedocs.io/en/latest/py_tutorials/py_feature2d/py_feature_homography/py_feature_homography.html
+#   accessed March 2021
+# - https://docs.opencv.org/3.4/d3/dc0/group__imgproc__shape.html#ga014b28e56cb8854c0de4a211cb2be656 accessed March 2021
 
 import cv2
 import numpy as np
@@ -10,12 +20,6 @@ import matplotlib.pyplot as plt
 from imutils import contours
 from skimage import measure
 import imutils
-
-'''
-cv2.imshow("Img", output)
-cv2.waitKey(0)
-cv2.destroyAllWindows()
-'''
 
 # constants
 FILE_TYPE = ".png"
@@ -32,6 +36,7 @@ NDVI_MAIN_CROP_NAME_TAIL = "_mcrop"
 NDVI_MATCH_NAME_TAIL = "_match"
 
 # threshold values for classifying areas as dead, unhealthy, healthy and very healthy
+# *255 as cv2 is encoded this way
 VH = 0.66 * 255
 H = 0.33 * 255
 UH = 0.22 * 255
@@ -57,9 +62,20 @@ class Image:
     # params - tail:string
     # returns - new_name:string
     def attach_name_tail(self, tail):
-        # new_name = self.dir + self.name.split(".")[0] + tail + ".png" todo remove?
         new_name = self.full_path.split(".")[0] + tail + FILE_TYPE
         return new_name
+
+    # run all the image processing functions todo last thing
+    # params - norm:boolean, comp_img_path:string, comps:int
+    # returns - None
+    def process_image_full(self, norm, comp_img_path, comps):
+        self.preprocess_image()
+        self.create_ndvi_images(norm)
+        self.create_colour_bar_image()
+        self.create_cmap_image()
+        self.object_detection()
+        self.main_crop_extraction()
+        self.is_match(comp_img_path, comps)
 
     # reads in original image pre-processes it then saves it with a modified name
     # params - None
@@ -185,18 +201,6 @@ class Image:
 
         cv2.imwrite(self.attach_name_tail(NDVI_COLOUR_MAP_NAME_TAIL), output)
 
-    # run all the image processing functions todo last thing
-    # params - norm:boolean, comp_img_path:string, comps:int
-    # returns - None
-    def process_image_full(self, norm, comp_img_path, comps):
-        self.preprocess_image()
-        self.create_ndvi_images(norm)
-        self.create_colour_bar_image()
-        self.create_cmap_image()
-        self.object_detection()
-        self.main_crop_extraction()
-        self.is_match(comp_img_path, comps)
-
     # create a mask of crop objects from the greyscale image to identify main crop and anomalies
     # params - None
     # returns - None
@@ -206,7 +210,7 @@ class Image:
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
         # blurring reduces image noise
-        blurred = cv2.GaussianBlur(gray, (11, 11), 0)
+        blurred = cv2.GaussianBlur(gray, (35, 35), 0)
 
         # threshold the image to reveal light regions in the
         # cv2 image type is 8 bit encoding i.e. 0-255
@@ -348,7 +352,7 @@ class Image:
                 roi = image[y:y + h, x:x + w]
 
                 # Show the output image
-                self.quick_show(roi)
+                # self.quick_show(roi)
         cv2.imwrite(self.attach_name_tail(NDVI_MAIN_CROP_NAME_TAIL), roi)
 
     # takes the 'self' image and one other (as a parameter) and compares their features
