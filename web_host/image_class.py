@@ -158,9 +158,9 @@ class Image:
         # blur to reduce noise and add softness to edges
         img_g_blur = cv2.GaussianBlur(img_g, (35, 35), 0)
 
-        # erode and dilate to remove small blobs
+        '''# erode and dilate to remove small blobs
         img_g_blur = cv2.erode(img_g_blur, None, iterations=2)
-        img_g_blur = cv2.dilate(img_g_blur, None, iterations=4)
+        img_g_blur = cv2.dilate(img_g_blur, None, iterations=4)'''
 
         # create an iterable list of masks to overlay classified by dead, unhealthy, healthy and very healthy thresholds
         masks = [cv2.inRange(img_g_blur, VH, 255), cv2.inRange(img_g_blur, H, VH), cv2.inRange(img_g_blur, UH, H),
@@ -193,6 +193,8 @@ class Image:
                 if j == 0:
                     cv2.putText(overlay, labels[i], (x + h // 2, y + h // 2),
                                 cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
+
+        cv2.imwrite(self.attach_name_tail('_overlay'),overlay)
         # apply overlay
         output = np.zeros(img.shape, dtype="uint8")
         # higher alpha the more prominent the overlay
@@ -216,7 +218,10 @@ class Image:
         # cv2 image type is 8 bit encoding i.e. 0-255
         # if the pixel >= 200 it becomes white if pixel < 200 it is black
         # [0] returns threshold value [1] returns bitmap
-        thresh = cv2.threshold(blurred, 200, 255, cv2.THRESH_BINARY)[1]
+        thresh = cv2.threshold(blurred, H, 255, cv2.THRESH_BINARY)[1]
+
+        #self.quick_show(thresh)
+        #cv2.imwrite(self.attach_name_tail('_threshmask'), thresh)
 
         # perform a series of erosions and dilations to remove small blobs from the thresholded image
         thresh = cv2.erode(thresh, None, iterations=2)
@@ -242,6 +247,8 @@ class Image:
             if num_pixels > BLOB_SIZE:  # number of pixels to be a large blob
                 mask = cv2.add(mask, label_mask)
 
+
+
         # find the contours in the mask, then sort them from left to right
         cnts = cv2.findContours(mask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         cnts = imutils.grab_contours(cnts)
@@ -260,6 +267,7 @@ class Image:
                 c_h = cv2.convexHull(c)
                 cv2.drawContours(img, [c], 0, (255, 0, 0), 3)
                 cv2.drawContours(img, [c_h], 0, (255, 0, 200), 3)
+                self.quick_show(img)
 
                 # calculate the perimeter area ration and represent the difference as a percentage
                 perimeter_area_ratio_c = cv2.arcLength(c, True) / cv2.contourArea(c)
@@ -281,7 +289,7 @@ class Image:
                 cv2.putText(img, "#{} anomaly".format(i + 1), (x, y - 15),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
 
-        # self.quick_show(img)
+        #self.quick_show(img)
         cv2.imwrite(self.attach_name_tail(NDVI_OBJECTS_NAME_TAIL), img)
 
     # extract only the main crop from the image for detailed analysis
@@ -342,9 +350,13 @@ class Image:
 
                 mask = np.zeros_like(image)  # Create mask where white is what we want, black otherwise
                 cv2.fillPoly(mask, [c], [255,255,255])  # Draw filled contour in mask
-                sel = mask != 255
-                image[sel] = 0
 
+                #cv2.imwrite(self.attach_name_tail('_maincropextract'), mask)
+                sel = mask != 255
+                self.quick_show(mask)
+
+                image[sel] = 0
+                self.quick_show(image)
                 # Now crop
                 # get bounding rectangle to crop to
                 (x, y, w, h) = cv2.boundingRect(c)
