@@ -16,6 +16,8 @@
 
 import cv2
 import numpy as np
+import matplotlib
+matplotlib.use('agg')
 import matplotlib.pyplot as plt
 from imutils import contours
 from skimage import measure
@@ -65,32 +67,43 @@ class Image:
         new_name = self.full_path.split(".")[0] + tail + FILE_TYPE
         return new_name
 
-    # run all the image processing functions todo last thing
+    # run all the image processing functions
     # params - norm:boolean, comp_img_path:string, comps:int
     # returns - None
     def process_image_full(self, norm, comp_img_path, comps):
-        self.preprocess_image()
-        self.create_ndvi_images(norm)
-        self.create_colour_bar_image()
-        self.create_cmap_image()
-        self.object_detection()
-        self.main_crop_extraction()
-        self.is_match(comp_img_path, comps)
+        data = [self.preprocess_image(), self.create_ndvi_images(norm), self.create_colour_bar_image(),
+                self.create_cmap_image(), self.object_detection(), self.main_crop_extraction(),
+                self.is_match(comp_img_path, comps)]
+        return data
+
+    # run all the image processing functions except the comparison
+    # params - norm:boolean
+    # returns - None
+    def process_image(self, norm):
+        data = [self.full_path,
+                self.preprocess_image(),
+                self.create_ndvi_images(norm),
+                self.create_colour_bar_image(),
+                self.create_cmap_image(),
+                self.object_detection(),
+                self.main_crop_extraction()]
+        return data
 
     # reads in original image pre-processes it then saves it with a modified name
     # params - None
-    # returns - None
+    # returns - [file save location]:string
     def preprocess_image(self):
         # read in image
         img = cv2.imread(self.full_path)
         # add preprocessing logic here if needed
         # save as new image
         cv2.imwrite(self.attach_name_tail(PREPRO_NAME_TAIL), img)
+        return self.attach_name_tail(PREPRO_NAME_TAIL)
 
     # calculates the ndvi reading per pixel and saves both a colour and greyscale image
     # the greyscale image can be normalised or not depending on the corresponding parameter 'normalise'
     # params - normalise:boolean
-    # returns - None
+    # returns - [file save location gray]:string, [file save location colour]:string
     def create_ndvi_images(self, normalise):
         img = cv2.imread(self.attach_name_tail(PREPRO_NAME_TAIL))
         # split image into rgb channels
@@ -128,12 +141,12 @@ class Image:
             img = cv2.multiply(img, (10), None)
 
         # save normalised greyscale image
-        destination = self.attach_name_tail(NDVI_GRAY_NAME_TAIL)
-        cv2.imwrite(destination, img)
+        cv2.imwrite(self.attach_name_tail(NDVI_GRAY_NAME_TAIL), img)
+        return self.attach_name_tail(NDVI_GRAY_NAME_TAIL), save_path
 
     # uses matplotlib plt to create a new image with a colourbar for easier estimation of crop performance and saves it
     # params - None
-    # returns - None
+    # returns - [file save location]:string
     def create_colour_bar_image(self):  # todo neaten
         img = cv2.imread(self.attach_name_tail(NDVI_COLOUR_NAME_TAIL))
         fig, ax = plt.subplots()
@@ -145,10 +158,11 @@ class Image:
         plt.axis('off')
         plt.savefig(self.dir + self.name.split('.')[0] + '_ndvi-c-bar.png', format='png', dpi=800)
         # plt.show()
+        return self.dir + self.name.split('.')[0] + '_ndvi-c-bar.png'
 
     # apply a threshold colourmap to the ndvi image for quicker identification of crop health and save the  new image
     # params - None
-    # returns - None
+    # returns - [file save location]:string
     def create_cmap_image(self):
         # get an original grayscale image for colouring
         img = cv2.imread(self.attach_name_tail(NDVI_GRAY_NAME_TAIL))
@@ -158,9 +172,9 @@ class Image:
         # blur to reduce noise and add softness to edges
         img_g_blur = cv2.GaussianBlur(img_g, (35, 35), 0)
 
-        # erode and dilate to remove small blobs
+        '''# erode and dilate to remove small blobs
         img_g_blur = cv2.erode(img_g_blur, None, iterations=2)
-        img_g_blur = cv2.dilate(img_g_blur, None, iterations=4)
+        img_g_blur = cv2.dilate(img_g_blur, None, iterations=4)'''
 
         # create an iterable list of masks to overlay classified by dead, unhealthy, healthy and very healthy thresholds
         masks = [cv2.inRange(img_g_blur, VH, 255), cv2.inRange(img_g_blur, H, VH), cv2.inRange(img_g_blur, UH, H),
@@ -193,6 +207,7 @@ class Image:
                 if j == 0:
                     cv2.putText(overlay, labels[i], (x + h // 2, y + h // 2),
                                 cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
+
         # apply overlay
         output = np.zeros(img.shape, dtype="uint8")
         # higher alpha the more prominent the overlay
@@ -200,10 +215,11 @@ class Image:
         cv2.addWeighted(overlay, alpha, img, 1-alpha, 0, output)
 
         cv2.imwrite(self.attach_name_tail(NDVI_COLOUR_MAP_NAME_TAIL), output)
+        return self.attach_name_tail(NDVI_COLOUR_MAP_NAME_TAIL)
 
     # create a mask of crop objects from the greyscale image to identify main crop and anomalies
     # params - None
-    # returns - None
+    # returns - [file save location]:string
     def object_detection(self):  # todo needs softening
         # read in file convert to a cv2 grayscale format
         img = cv2.imread(self.attach_name_tail(NDVI_GRAY_NAME_TAIL))
@@ -216,7 +232,10 @@ class Image:
         # cv2 image type is 8 bit encoding i.e. 0-255
         # if the pixel >= 200 it becomes white if pixel < 200 it is black
         # [0] returns threshold value [1] returns bitmap
-        thresh = cv2.threshold(blurred, 200, 255, cv2.THRESH_BINARY)[1]
+        thresh = cv2.threshold(blurred, H, 255, cv2.THRESH_BINARY)[1]
+
+        #self.quick_show(thresh)
+        #cv2.imwrite(self.attach_name_tail('_threshmask'), thresh)
 
         # perform a series of erosions and dilations to remove small blobs from the thresholded image
         thresh = cv2.erode(thresh, None, iterations=2)
@@ -242,6 +261,8 @@ class Image:
             if num_pixels > BLOB_SIZE:  # number of pixels to be a large blob
                 mask = cv2.add(mask, label_mask)
 
+
+
         # find the contours in the mask, then sort them from left to right
         cnts = cv2.findContours(mask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         cnts = imutils.grab_contours(cnts)
@@ -260,6 +281,7 @@ class Image:
                 c_h = cv2.convexHull(c)
                 cv2.drawContours(img, [c], 0, (255, 0, 0), 3)
                 cv2.drawContours(img, [c_h], 0, (255, 0, 200), 3)
+                #self.quick_show(img)
 
                 # calculate the perimeter area ration and represent the difference as a percentage
                 perimeter_area_ratio_c = cv2.arcLength(c, True) / cv2.contourArea(c)
@@ -281,12 +303,13 @@ class Image:
                 cv2.putText(img, "#{} anomaly".format(i + 1), (x, y - 15),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
 
-        # self.quick_show(img)
+        #self.quick_show(img)
         cv2.imwrite(self.attach_name_tail(NDVI_OBJECTS_NAME_TAIL), img)
+        return self.attach_name_tail(NDVI_OBJECTS_NAME_TAIL)
 
     # extract only the main crop from the image for detailed analysis
     # params - None
-    # returns - None
+    # returns - [file save location]:string
     def main_crop_extraction(self):
         # read in file convert to a cv2 grayscale format
         image = cv2.imread(self.attach_name_tail(NDVI_GRAY_NAME_TAIL))
@@ -342,9 +365,13 @@ class Image:
 
                 mask = np.zeros_like(image)  # Create mask where white is what we want, black otherwise
                 cv2.fillPoly(mask, [c], [255,255,255])  # Draw filled contour in mask
-                sel = mask != 255
-                image[sel] = 0
 
+                #cv2.imwrite(self.attach_name_tail('_maincropextract'), mask)
+                sel = mask != 255
+                #self.quick_show(mask)
+
+                image[sel] = 0
+                #self.quick_show(image)
                 # Now crop
                 # get bounding rectangle to crop to
                 (x, y, w, h) = cv2.boundingRect(c)
@@ -354,11 +381,12 @@ class Image:
                 # Show the output image
                 # self.quick_show(roi)
         cv2.imwrite(self.attach_name_tail(NDVI_MAIN_CROP_NAME_TAIL), roi)
+        return self.attach_name_tail(NDVI_MAIN_CROP_NAME_TAIL)
 
     # takes the 'self' image and one other (as a parameter) and compares their features
     # if enough features are a good match the images are considered a match
     # params - min_match_count:int
-    # returns - match:boolean
+    # returns - match:boolean, [file save location]:string
     def is_match(self, second_img_path, min_match_count):
         img1 = cv2.imread(self.attach_name_tail(NDVI_COLOUR_NAME_TAIL))
         img2 = cv2.imread(second_img_path)
@@ -396,7 +424,7 @@ class Image:
 
         #self.quick_show(img3)
         cv2.imwrite(self.attach_name_tail(NDVI_MATCH_NAME_TAIL), img3)
-        return match
+        return match, self.attach_name_tail(NDVI_MATCH_NAME_TAIL)
 
     @staticmethod
     def quick_show(img):

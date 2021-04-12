@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="author" content="Samuel Kirk">
+        <meta name="references" content="w3schools">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="static/styles/main.css">
+
+    </head>
+
+    <!-- Side navigation -->
+    <div class="sidenav">
+        <h3>Navigation</h3>
+        <a href="home">Home</a>
+        <a href="analysis" style="color:#B8E895">Analysis</a>
+        <a href="image_match">Image Match</a>
+        <a href="help">Help</a>
+        <p style="position: absolute; bottom: 0; color: whitesmoke; padding: 8px">Created by Sam Kirk 2021</p>
+    </div>
+
+    <!-- Page content -->
+    <div class="main">
+        <h1>NDVI Analytics System</h1>
+        <h2>Analysis</h2>
+        <p>
+            Select the filepath of the image you wish to analyse and click "Go". Once completed you will see all the processed and analysed images labelled and with their respective save loaction. For information on interpreting the results go to the <a href="help">Help</a> page
+        </p>
+        <div class="function">
+            <div class="inputs">
+                <form action="/analysis_action" method="post">
+                    <select class="entry" name="option">
+                        {% for file in raw_files %}
+                            <option value="{{ file }}" SELECTED>{{ file }}</option>
+                        {% endfor %}
+                    </select><br>
+                    <input class="button" type="submit" value="Go">
+                </form> 
+            </div>
+            <div class="outputs" style="padding: 20px 0px">
+                {{ image_HTML | safe }}
+            </div>
+        </div>
+    </div>
+    <body>
+
+    </body>
+</html>
