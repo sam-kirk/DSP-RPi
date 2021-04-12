@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="author" content="Samuel Kirk">
+        <meta name="references" content="w3schools">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="static/styles/main.css">
+
+    </head>
+
+    <!-- Side navigation -->
+    <div class="sidenav">
+        <h3>Navigation</h3>
+        <a href="home">Home</a>
+        <a href="analysis" style="color:#B8E895">Analysis</a>
+        <a href="image_match">Image Match</a>
+        <a href="help">Help</a>
+    </div>
+
+    <!-- Page content -->
+    <div class="main">
+        <h1>NDVI Analytics System</h1>
+        <h2>Analysis</h2>
+        <p>
+            Enter the filepath of the image you wish to analyse and click go.
+
+            Once completed you will see all the processed and analysed images labled and with their respective save loaction.
+        </p>
+        <div class="function">
+            <div class="inputs">
+                <form action="/analysis_action" method="post">
+                    <input class="entry" type="text" id="fpath" name="fpath" placeholder="Enter filepath"><br>
+                    <input class="button" type="submit" value="Go">
+                </form> 
+            </div>
+            <div class="outputs">
+
+            </div>
+        </div>
+    </div>
+    <body>
+
+    </body>
+</html>

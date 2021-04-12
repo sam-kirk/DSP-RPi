@@ -194,7 +194,6 @@ class Image:
                     cv2.putText(overlay, labels[i], (x + h // 2, y + h // 2),
                                 cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
 
-        cv2.imwrite(self.attach_name_tail('_overlay'),overlay)
         # apply overlay
         output = np.zeros(img.shape, dtype="uint8")
         # higher alpha the more prominent the overlay
@@ -267,7 +266,7 @@ class Image:
                 c_h = cv2.convexHull(c)
                 cv2.drawContours(img, [c], 0, (255, 0, 0), 3)
                 cv2.drawContours(img, [c_h], 0, (255, 0, 200), 3)
-                self.quick_show(img)
+                #self.quick_show(img)
 
                 # calculate the perimeter area ration and represent the difference as a percentage
                 perimeter_area_ratio_c = cv2.arcLength(c, True) / cv2.contourArea(c)
@@ -353,10 +352,10 @@ class Image:
 
                 #cv2.imwrite(self.attach_name_tail('_maincropextract'), mask)
                 sel = mask != 255
-                self.quick_show(mask)
+                #self.quick_show(mask)
 
                 image[sel] = 0
-                self.quick_show(image)
+                #self.quick_show(image)
                 # Now crop
                 # get bounding rectangle to crop to
                 (x, y, w, h) = cv2.boundingRect(c)
