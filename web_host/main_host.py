@@ -84,7 +84,7 @@ def analysis_action():
         paths.insert(3, tple[1])
 
         titles = ["Original Image", "Pre Processed Image", "NDVI Grey", "NDVI Colour",
-                  "NDVI Colour Bar", "NDVI Colour Maps", "Object Detection", "Crop Extraction"]
+                  "NDVI Colour Bar", "NDVI Colour Map", "Object Detection", "Crop Extraction"]
         print('p= ', paths)
         image_HTML = ""
         for i in range(len(paths)):
@@ -118,8 +118,8 @@ def image_match_action():
         print('p= ', paths)
         match_HTML = ""
         for i in range(len(paths)):
-            new_section = "<div class='output' style='padding: 10px 0px'><h3>" + titles[i] + ' - ' + str(res[0]) +\
-                          "</h3><hr style='border-top: 1px dashed #333333; width: 100%; margin: 0px;'><img class='output_image' src='" +\
+            new_section = "<div class='output' style='padding: 10px 0px'><h3>" + titles[i] + ' - <i>' + str(res[0]) +\
+                          "</i></h3><hr style='border-top: 1px dashed #333333; width: 40%; margin: 0px;'><img class='output_image' src='" +\
                           paths[i] + "'><p>@location " + paths[i] + "</p></div>"
             match_HTML = match_HTML + new_section
 
@@ -154,7 +154,6 @@ def image_match():
     raw_files = []  # for storing image objects for this set
     for file in glob.glob(f_path + term):  # for each file that matches the term in the given filepath
         # only process the raw images
-        print(file)
         if len(re.findall("_[0-9][0-9]-[0-9][0-9]-[0-9][0-9]\Z", file.split(".")[0])) > 0:
             raw_files.append(file)
     print(raw_files)

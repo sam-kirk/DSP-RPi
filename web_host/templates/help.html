@@ -16,12 +16,81 @@
         <a href="analysis">Analysis</a>
         <a href="image_match">Image Match</a>
         <a href="help" style="color:#B8E895">Help</a>
+        <p style="position: absolute; bottom: 0; color: whitesmoke; padding: 8px">Created by Sam Kirk 2021</p>
     </div>
 
     <!-- Page content -->
     <div class="main">
         <h1>NDVI Analytics System</h1>
         <h2>Help</h2>
+
+        <p>
+            This page contains details on using the system and additional useful information.
+        </p>
+        <div class="function">
+            <div class='output' style='padding: 10px 0px'>
+                <h3>How To</h3>
+                <hr style='border-top: 1px dashed #333333; width: 40%; margin: 0px;'>
+                <p>
+                    To analyse your image follow these steps:
+                    <ol>
+                        <li>Record data</li>
+                        <li>Transfer images to the file location "static/images"</li>
+                        <li>In the navigation pane click <a href="analysis">Analysis</a></li>
+                        <li>Use the dropdown box to select the image you wish to analyse</li>
+                        <li>Click "Go"</li>
+                        <li>View results</li>
+                    </ol>
+
+                    To compare two images:
+                    <ol>
+                        <li>Record data</li>
+                        <li>Transfer images to the file location "static/images"</li>
+                        <li>In the navigation pane click <a href="image_match">Image Match</a></li>
+                        <li>Use the dropdown box to select the two images you wish to compare</li>
+                        <li>Click "Go"</li>
+                        <li>View results</li>
+                    </ol>
+                    Note: Next to the "Image Match" subtitle will be the result of the match. If "True" the images are of the same location else if "False" the images are of different locations.
+                </p>
+                <p>
+                    To use the fullsize images go to the file location stated with the tag "@location"
+                </p>
+            </div>
+            <div class='output' style='padding: 10px 0px'>
+                <h3>Interpreting the Results of Analysis</h3>
+                <hr style='border-top: 1px dashed #333333; width: 40%; margin: 0px;'>
+                <h4>Pre Proccessed Image</h4>
+                <p>
+                    This image is the result of pre-processing the original image. In this implementation no pre-processing has been completed but could be an important aspect for some users and therefore the foundations for adaptation were developed.
+                </p>
+                <h4>NDVI Grey</h4>
+                <p>
+                    This image is the result of applying the NDVI equation to the original image. Darker pixels indicate lower NDVI whilst lighter pixels indicate higher NDVI.
+                </p>
+                <h4>NDVI Colour</h4>
+                <p>
+                    This image is the result of applying the NDVI equation to the original image but preserving the colour channels. Red(er) pixels indicate lower NDVI whilst greener pixels indicate higher NDVI.
+                </p>
+                <h4>NDVI Colour Bar</h4>
+                <p>
+                    This image was created to allow teh user to quantify the NDVI of spefic regions. The values on the bar correspond to dead/inanimate, unhealthy, healthy and very healthy values of NDVI (higher is healthier).
+                </p>
+                <h4>NDVI Colour Map</h4>
+                <p>
+                    This uses the NDVI Grey image and applies thresholding to colourmap the crop regions. The areas are labled but the shape can sometimes hide the labels. Black is inanimate, red is unhealthy, yellow is healthy and green is very healthy.
+                </p>
+                <h4>Object detection</h4>
+                <p>
+                    This uses the NDVI Grey Image and uses blob detection to recognise object in the image. The largest blob is taken as the main crop and has an edge effect value assigned to it where lower scores are better. Anomolies are then labled and circled and are likely weeds or other intrusive objects.
+                </p>
+                <h4>Crop Extraction</h4>
+                <p>
+                    This uses the NDVI Grey Image and uses blob detection to recognise object in the image. The largest blob is taken as the main crop and is segmented and cropped. This provide the minimum image that contains the main crop and can be used for further analysis with machine learning and other techniques.
+                </p>
+            </div>
+        </div>
+        
     </div>
     <body>
 
