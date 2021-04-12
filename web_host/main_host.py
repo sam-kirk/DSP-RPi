@@ -25,7 +25,6 @@ except ImportError:
 # takes all images in file path and creates a new Image object for each
 # Image objects are appended to a list and the list is returned
 '''def load_image_set(f_path, term):
-    print("---- Start")
     images = []  # for storing image objects for this set
     for file in glob.glob(f_path + term):  # for each file that matches the term in the given filepath
         # only process the raw images
@@ -67,15 +66,10 @@ def home():
 @app.route("/analysis_action", methods=["POST"])
 def analysis_action():
     print("-analysis_action")
-    fpath = request.form.get("fpath")
+    fpath = request.form.get("option")
     if fpath == "":
-        success = False
         fpath = "[Empty]"
     else:
-        # check file exists
-        # if file does not exist
-            # success = False
-            # fpath = "[Empty]"
         # else: (all good)
         # split the filepath into name and path
         fname = fpath.rsplit("/", 1)[-1]
@@ -102,22 +96,74 @@ def analysis_action():
         session['image_HTML'] = image_HTML
     return redirect("analysis")
 
+# controller function
+@app.route("/image_match_action", methods=["POST"])
+def image_match_action():
+    print("-image_match_action")
+    fpath1 = request.form.get("option1")
+    fpath2 = request.form.get("option2")
+    if fpath1 == "" or fpath1 == "":
+        fpath1 = "[Empty]"
+        fpath2 = "[Empty]"
+    else:
+        # split the filepath into name and path
+        fname1 = fpath1.rsplit("/", 1)[-1]
+        fpath1 = fpath1.rsplit("/", 1)[0] + "/"
+        image = Image(fname1, fpath1)
+
+        paths = []
+        res = image.is_match(fpath2, 10)  # run match with 10 good matches
+        paths.append(res[1])
+        titles = ["Image Match"]
+        print('p= ', paths)
+        match_HTML = ""
+        for i in range(len(paths)):
+            new_section = "<div class='output' style='padding: 10px 0px'><h3>" + titles[i] + ' - ' + str(res[0]) +\
+                          "</h3><hr style='border-top: 1px dashed #333333; width: 100%; margin: 0px;'><img class='output_image' src='" +\
+                          paths[i] + "'><p>@location " + paths[i] + "</p></div>"
+            match_HTML = match_HTML + new_section
+
+        session['match_HTML'] = match_HTML
+    return redirect("image_match")
+
 
 @app.route("/analysis", methods=["POST", "GET"])
 def analysis():
     print("-analysis")
+    f_path = 'static/images/'
+    term = '*.png'
+    raw_files = []  # for storing image objects for this set
+    for file in glob.glob(f_path + term):  # for each file that matches the term in the given filepath
+        # only process the raw images
+        if len(re.findall("_[0-9][0-9]-[0-9][0-9]-[0-9][0-9]\Z", file.split(".")[0])) > 0:
+            raw_files.append(file)
+    print(raw_files)
     try:
         image_HTML = session['image_HTML']
     except:
         image_HTML = '<p>Choose an image to analyse and the output will be shown below</p>'
 
-    return render_template("analysis.html", image_HTML=image_HTML)
+    return render_template("analysis.html", image_HTML=image_HTML, raw_files=raw_files)
 
 
-@app.route("/image_match")
+@app.route("/image_match", methods=["POST", "GET"])
 def image_match():
     print("-image_match")
-    return render_template("image_match.html")
+    f_path = 'static/images/'
+    term = '*.png'
+    raw_files = []  # for storing image objects for this set
+    for file in glob.glob(f_path + term):  # for each file that matches the term in the given filepath
+        # only process the raw images
+        print(file)
+        if len(re.findall("_[0-9][0-9]-[0-9][0-9]-[0-9][0-9]\Z", file.split(".")[0])) > 0:
+            raw_files.append(file)
+    print(raw_files)
+    try:
+        match_HTML = session['match_HTML']
+    except:
+        match_HTML = '<p>Choose two images to compare and the output will be shown below</p>'
+
+    return render_template("image_match.html", match_HTML=match_HTML, raw_files=raw_files)
 
 
 # @app.route("/analysis", methods=["POST", "GET"])

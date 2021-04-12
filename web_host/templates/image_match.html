@@ -22,6 +22,32 @@
     <div class="main">
         <h1>NDVI Analytics System</h1>
         <h2>Image Match</h2>
+
+        <p>
+            Select the filepaths of the images you wish to compare and click go.
+
+            Once completed you will see the match image and a True or False depeding on in it is a good match.
+        </p>
+        <div class="function">
+            <div class="inputs">
+                <form action="/image_match_action" method="post">
+                    <select class="entry" name="option1">
+                        {% for file in raw_files %}
+                            <option value="{{ file }}" SELECTED>{{ file }}</option>
+                        {% endfor %}
+                    </select><br>
+                    <select class="entry" name="option2">
+                        {% for file in raw_files %}
+                            <option value="{{ file }}" SELECTED>{{ file }}</option>
+                        {% endfor %}
+                    </select><br>
+                    <input class="button" type="submit" value="Go">
+                </form> 
+            </div>
+            <div class="outputs" style="padding: 20px 0px">
+                {{ match_HTML | safe }}
+            </div>
+        </div>
     </div>
     <body>
 
