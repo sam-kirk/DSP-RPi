@@ -59,6 +59,7 @@ def home():
     return render_template("home.html")
 
 
+# controller function
 @app.route("/analysis_action", methods=["POST"])
 def analysis_action():
     print("-analysis_action")
@@ -72,8 +73,12 @@ def analysis_action():
             # success = False
             # fpath = "[Empty]"
         # else: (all good)
-        image = Image(fpath.split("/")[-1], fpath)
-    print('fpath = ', fpath)
+        # split the filepath into name and path
+        fname = fpath.rsplit("/",1)[-1]
+        fpath = fpath.rsplit("/",1)[0] + "/"
+        image = Image(fname, fpath)
+        paths = image.process_image(True)  # run analysis with normalisation
+        print('paths = ', paths)
     return redirect("analysis")
 
 
