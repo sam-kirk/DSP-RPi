@@ -25,7 +25,7 @@
         <p>
             Enter the filepath of the image you wish to analyse and click go.
 
-            Once completed you will see all the processed and analysed images labled and with their respective save loaction.
+            Once completed you will see all the processed and analysed images labelled and with their respective save loaction.
         </p>
         <div class="function">
             <div class="inputs">
@@ -34,8 +34,8 @@
                     <input class="button" type="submit" value="Go">
                 </form> 
             </div>
-            <div class="outputs">
-
+            <div class="outputs" style="padding: 20px 0px">
+                {{ image_HTML | safe }}
             </div>
         </div>
     </div>

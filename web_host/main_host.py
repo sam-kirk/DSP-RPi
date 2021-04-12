@@ -5,12 +5,13 @@ Created on Tue Nov 10 15:55:22 2020
 
 @author: sam
 """
-from flask import Flask, request, render_template, redirect, url_for, send_from_directory, send_file
+from flask import Flask, session, request, render_template, redirect, url_for, send_from_directory, send_file
 import os
 from time import sleep
 from datetime import datetime
 import glob
 from image_class import Image
+import itertools
 import re
 
 #if running on pi image_capture can run
@@ -52,6 +53,9 @@ def mock_function(images):  # todo rename
 
 app = Flask(__name__)
 
+# should be secret but not required for local hosting
+app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
+
 
 @app.route("/home")
 def home():
@@ -74,18 +78,38 @@ def analysis_action():
             # fpath = "[Empty]"
         # else: (all good)
         # split the filepath into name and path
-        fname = fpath.rsplit("/",1)[-1]
-        fpath = fpath.rsplit("/",1)[0] + "/"
+        fname = fpath.rsplit("/", 1)[-1]
+        fpath = fpath.rsplit("/", 1)[0] + "/"
         image = Image(fname, fpath)
         paths = image.process_image(True)  # run analysis with normalisation
-        print('paths = ', paths)
+
+        # take returned values and make them a flat list
+        tple = paths[1]
+        paths.pop(1)
+        paths.insert(1, tple[0])
+        paths.insert(2, tple[1])
+
+        titles = ["Original Image", "Pre Processed Image", "NDVI Grey", "NDVI Colour", 
+                  "NDVI Colour Bar", "NDVI Colour Maps", "Object Detection", "Crop Extraction"]
+
+        image_HTML = "<div class='output' style='padding: 10px 0px'><h3>Original Image</h3><hr style='border-top: 1px dashed #333333; width: 40%; margin: 0px;'><img class='output_image' src='static/images/2021-03-25_14-08-07.png'><p>static/images2021-03-25_14-08-07.png</p></div>"
+        for i in range(len(paths)):
+            new_section = "<div class='output' style='padding: 10px 0px'><h3>" + titles[i+1] + "</h3><hr style='border-top: 1px dashed #333333; width: 40%; margin: 0px;'><img class='output_image' src='" + paths[i] + "'><p>" + paths[i] + "</p></div>"
+            image_HTML = image_HTML + new_section
+
+        session['image_HTML'] = image_HTML
     return redirect("analysis")
 
 
 @app.route("/analysis", methods=["POST", "GET"])
 def analysis():
     print("-analysis")
-    return render_template("analysis.html")
+    try:
+        image_HTML = session['image_HTML']
+    except:
+        image_HTML = '<p>Nada</p>'
+
+    return render_template("analysis.html", image_HTML=image_HTML)
 
 
 @app.route("/image_match")
