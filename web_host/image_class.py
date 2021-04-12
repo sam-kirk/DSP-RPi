@@ -80,7 +80,8 @@ class Image:
     # params - norm:boolean
     # returns - None
     def process_image(self, norm):
-        data = [self.preprocess_image(),
+        data = [self.full_path,
+                self.preprocess_image(),
                 self.create_ndvi_images(norm),
                 self.create_colour_bar_image(),
                 self.create_cmap_image(),

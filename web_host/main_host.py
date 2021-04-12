@@ -84,17 +84,19 @@ def analysis_action():
         paths = image.process_image(True)  # run analysis with normalisation
 
         # take returned values and make them a flat list
-        tple = paths[1]
-        paths.pop(1)
-        paths.insert(1, tple[0])
-        paths.insert(2, tple[1])
+        tple = paths[2]
+        paths.pop(2)
+        paths.insert(2, tple[0])
+        paths.insert(3, tple[1])
 
-        titles = ["Original Image", "Pre Processed Image", "NDVI Grey", "NDVI Colour", 
+        titles = ["Original Image", "Pre Processed Image", "NDVI Grey", "NDVI Colour",
                   "NDVI Colour Bar", "NDVI Colour Maps", "Object Detection", "Crop Extraction"]
-
-        image_HTML = "<div class='output' style='padding: 10px 0px'><h3>Original Image</h3><hr style='border-top: 1px dashed #333333; width: 40%; margin: 0px;'><img class='output_image' src='static/images/2021-03-25_14-08-07.png'><p>static/images2021-03-25_14-08-07.png</p></div>"
+        print('p= ', paths)
+        image_HTML = ""
         for i in range(len(paths)):
-            new_section = "<div class='output' style='padding: 10px 0px'><h3>" + titles[i+1] + "</h3><hr style='border-top: 1px dashed #333333; width: 40%; margin: 0px;'><img class='output_image' src='" + paths[i] + "'><p>" + paths[i] + "</p></div>"
+            new_section = "<div class='output' style='padding: 10px 0px'><h3>" + titles[i] +\
+                          "</h3><hr style='border-top: 1px dashed #333333; width: 40%; margin: 0px;'><img class='output_image' src='" +\
+                          paths[i] + "'><p>@location " + paths[i] + "</p></div>"
             image_HTML = image_HTML + new_section
 
         session['image_HTML'] = image_HTML
@@ -107,7 +109,7 @@ def analysis():
     try:
         image_HTML = session['image_HTML']
     except:
-        image_HTML = '<p>Nada</p>'
+        image_HTML = '<p>Choose an image to analyse and the output will be shown below</p>'
 
     return render_template("analysis.html", image_HTML=image_HTML)
 
