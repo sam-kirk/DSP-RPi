@@ -94,6 +94,8 @@ def image_match_action():
     fpath1 = request.form.get("option1")
     fpath2 = request.form.get("option2")
 
+    session['match_HTML'] = ""
+
     if fpath1 == "" or fpath2 == "":
         fpath1 = "[Empty]"
         fpath2 = "[Empty]"
@@ -107,11 +109,13 @@ def image_match_action():
         print(image.full_path)
         print("fpath op 2 = ", fpath2)
         res = image.is_match(fpath2, 10)  # run match with 10 good matches
+
         paths.append(res[1])
         titles = ["Image Match"]
         print('p= ', paths)
         match_HTML = ""
         for i in range(len(paths)):
+            print(paths[i], "slut")
             new_section = "<div class='output' style='padding: 10px 0px'><h3>" + titles[i] + ' - <i>' + str(res[0]) +\
                           "</i></h3><hr style='border-top: 1px dashed #333333; width: 40%; margin: 0px;'><img class='output_image' src='" +\
                           paths[i] + "'><p>@location " + paths[i] + "</p></div>"
