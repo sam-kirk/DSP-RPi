@@ -388,7 +388,9 @@ class Image:
     # params - min_match_count:int
     # returns - match:boolean, [file save location]:string
     def is_match(self, second_img_path, min_match_count):
-        img1 = cv2.imread(self.attach_name_tail(NDVI_COLOUR_NAME_TAIL))
+        print('aaa ====', self.full_path)
+        print('bbb ====', second_img_path)
+        img1 = cv2.imread(self.full_path)
         img2 = cv2.imread(second_img_path)
 
         img1 = cv2.cvtColor(img1, cv2.COLOR_BGR2GRAY)
