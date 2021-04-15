@@ -13,6 +13,7 @@ import glob
 from image_class import Image
 import itertools
 import re
+import time
 
 #if running on pi image_capture can run
 try:
