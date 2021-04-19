@@ -71,8 +71,12 @@ class Image:
     # params - norm:boolean, comp_img_path:string, comps:int
     # returns - None
     def process_image_full(self, norm, comp_img_path, comps):
-        data = [self.preprocess_image(), self.create_ndvi_images(norm), self.create_colour_bar_image(),
-                self.create_cmap_image(), self.object_detection(), self.main_crop_extraction(),
+        data = [self.preprocess_image(),
+                self.create_ndvi_images(norm),
+                self.create_colour_bar_image(),
+                self.create_cmap_image(),
+                self.object_detection(),
+                self.main_crop_extraction(),
                 self.is_match(comp_img_path, comps)]
         return data
 
