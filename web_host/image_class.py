@@ -51,7 +51,6 @@ class Image:
     name = ""
     dir = ""
     full_path = ""
-    raw_bitmap = []
 
     # constructor only includes name and dir as all other data is dependent on these values
     def __init__(self, name, dir):
@@ -181,7 +180,9 @@ class Image:
         img_g_blur = cv2.dilate(img_g_blur, None, iterations=4)'''
 
         # create an iterable list of masks to overlay classified by dead, unhealthy, healthy and very healthy thresholds
-        masks = [cv2.inRange(img_g_blur, VH, 255), cv2.inRange(img_g_blur, H, VH), cv2.inRange(img_g_blur, UH, H),
+        masks = [cv2.inRange(img_g_blur, VH, 255),
+                 cv2.inRange(img_g_blur, H, VH),
+                 cv2.inRange(img_g_blur, UH, H),
                  cv2.inRange(img_g_blur, D, UH)]
 
         # create label lists for formatting
@@ -200,7 +201,7 @@ class Image:
                 continue
 
             # sort contours by size so only biggest of colour is labeled
-            mask = sorted(contours.sort_contours(mask)[0], key=lambda x: cv2.contourArea(x), reverse=True) # todo sometimes not visable
+            mask = sorted(contours.sort_contours(mask)[0], key=lambda x: cv2.contourArea(x), reverse=True)  # todo sometimes not visable
 
             # for each contour in the mask add to overlay
             for (j, c) in enumerate(mask):
@@ -264,8 +265,6 @@ class Image:
             # then add it to our mask of "large blobs"
             if num_pixels > BLOB_SIZE:  # number of pixels to be a large blob
                 mask = cv2.add(mask, label_mask)
-
-
 
         # find the contours in the mask, then sort them from left to right
         cnts = cv2.findContours(mask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -370,12 +369,11 @@ class Image:
                 mask = np.zeros_like(image)  # Create mask where white is what we want, black otherwise
                 cv2.fillPoly(mask, [c], [255,255,255])  # Draw filled contour in mask
 
-                #cv2.imwrite(self.attach_name_tail('_maincropextract'), mask)
+                # make array of non-white pixels
                 sel = mask != 255
-                #self.quick_show(mask)
-
+                # make all non-white pixels black in image
                 image[sel] = 0
-                #self.quick_show(image)
+
                 # Now crop
                 # get bounding rectangle to crop to
                 (x, y, w, h) = cv2.boundingRect(c)
@@ -392,8 +390,6 @@ class Image:
     # params - min_match_count:int
     # returns - match:boolean, [file save location]:string
     def is_match(self, second_img_path, min_match_count):
-        print('aaa ====', self.full_path)
-        print('bbb ====', second_img_path)
         img1 = cv2.imread(self.full_path)
         img2 = cv2.imread(second_img_path)
 
