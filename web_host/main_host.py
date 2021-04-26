@@ -5,15 +5,10 @@ Created on Tue Nov 10 15:55:22 2020
 
 @author: sam
 """
-from flask import Flask, session, request, render_template, redirect, url_for, send_from_directory, send_file
-import os
-from time import sleep
-from datetime import datetime
+from flask import Flask, session, request, render_template, redirect
 import glob
 from image_class import Image
-import itertools
 import re
-import time
 
 #if running on pi image_capture can run
 try:
@@ -25,22 +20,6 @@ except ImportError:
 # Plain Old Python defs
 # takes all images in file path and creates a new Image object for each
 # Image objects are appended to a list and the list is returned
-
-
-def mock_function(images):  # todo rename
-    print("---- Mock Function Called")
-    #images[0].preprocess_image()
-    #images[0].create_ndvi_images(True)
-    #images[0].create_colour_bar_image()
-    #images[0].create_cmap_image()
-    #images[0].object_detection()
-    images[0].main_crop_extraction()
-    #images[0].is_match('working_image_sets/raw_image_blue_filter copy/2021-03-25_14-07-57.png', 10)
-
-    #images[0].process_image_full(True, 'working_image_sets/raw_image_blue_filter copy/2021-03-25_14-07-57.png', 10)
-    '''for image in images:
-        image.process_image_full(True, 'working_image_sets/raw_image_blue_filter copy/2021-03-25_14-07-57.png', 10)'''
-
 
 app = Flask(__name__)
 
@@ -116,7 +95,6 @@ def image_match_action():
         print('p= ', paths)
         match_HTML = ""
         for i in range(len(paths)):
-            print(paths[i], "slut")
             new_section = "<div class='output' style='padding: 10px 0px'><h3>" + titles[i] + ' - <i>' + str(res[0]) +\
                           "</i></h3><hr style='border-top: 1px dashed #333333; width: 40%; margin: 0px;'><img class='output_image' src='" +\
                           paths[i] + "'><p>@location " + paths[i] + "</p></div>"
@@ -168,11 +146,10 @@ def help():
     print("-help")
     return render_template("help.html")
 
+
 if __name__ == "__main__":
+    #image = Image("2021-03-25_14-08-07.png", "static/images/")
+    #image.process_image(True)
     app.run(host="0.0.0.0")
-    #directory = "working_image_sets/raw_image_blue_filter/"
-    #name_term = "*.png"  # can be changed for different patterns or filetypes
-    #image_list = load_image_set(directory, name_term)
-    #mock_function(image_list)
 
 

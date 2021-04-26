@@ -210,7 +210,7 @@ class Image:
                 # fill contour with colour
                 cv2.fillPoly(overlay, pts=[c], color=colours[i])
                 if j == 0:
-                    cv2.putText(overlay, labels[i], (x + h // 2, y + h // 2),
+                    cv2.putText(overlay, labels[i], ((x + h // 2)+(i*20), (y + h // 2)+(i*20)),
                                 cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
 
         # apply overlay
@@ -218,7 +218,6 @@ class Image:
         # higher alpha the more prominent the overlay
         alpha = 0.6
         cv2.addWeighted(overlay, alpha, img, 1-alpha, 0, output)
-
         cv2.imwrite(self.attach_name_tail(NDVI_COLOUR_MAP_NAME_TAIL), output)
         return self.attach_name_tail(NDVI_COLOUR_MAP_NAME_TAIL)
 
