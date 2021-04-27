@@ -93,13 +93,13 @@ To take images with RPi:
 
 1. Use the for_pi/image_capture_timed.py or for_pi/image_capture_host_trigger.py
 
-For the timed trigger:
-1. Run the script on the RPi and follow the console prompts
-2. It will set the capture to go off at timed intervals for the amount of time you set
+For the timed trigger:<br>
+a. Run the script on the RPi and follow the console prompts<br>
+b. It will set the capture to go off at timed intervals for the amount of time you set
 
-For the host trigger scripts:
-1. Run the script on the RPi making sure to host the server on your local network
-2. Using another device navigate to the page and tap the "take picture" button to trigger an image capture on the RPi.
+For the host trigger scripts:<br>
+a. Run the script on the RPi making sure to host the server on your local network<br>
+b. Using another device navigate to the page and tap the "take picture" button to trigger an image capture on the RPi.
 
 2. Once the picture have been taken use a USB stick, or any other method, to transfer the files from the RPi to your main computer
 3. The images should be placed in the web_host/static/image folder
