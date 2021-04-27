@@ -41,7 +41,6 @@ def analysis_action():
     if fpath == "":
         fpath = "[Empty]"
     else:
-        # else: (all good)
         # split the filepath into name and path
         fname = fpath.rsplit("/", 1)[-1]
         fpath = fpath.rsplit("/", 1)[0] + "/"
