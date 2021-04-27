@@ -31,14 +31,10 @@
     <li>
       <a href="#getting-started">Getting Started</a>
       <ul>
-        <li><a href="#prerequisites">Prerequisites</a></li>
         <li><a href="#installation">Installation</a></li>
       </ul>
     </li>
     <li><a href="#usage">Usage</a></li>
-    <li><a href="#roadmap">Roadmap</a></li>
-    <li><a href="#contributing">Contributing</a></li>
-    <li><a href="#license">License</a></li>
     <li><a href="#contact">Contact</a></li>
     <li><a href="#acknowledgements">Acknowledgements</a></li>
   </ol>
@@ -71,70 +67,35 @@ To get a local copy up and running follow these simple steps.
 
 1. Clone the repo
    ```sh
-   git clone https://github.com/Mrbeekon/DSP-RPi
+   git clone https://github.com/Mrbeekon/DSP-RPi.git
    ```
-2. Install NPM packages
+2. Install imports
    ```sh
-   npm install
+   from flask import Flask, session, request, render_template, redirect
+   import glob
+   import re
+   import cv2
+   import numpy as np
+   import matplotlib.pyplot as plt
+   from imutils import contours
+   from skimage import measure
+   import imutils
+   import matplotlib
    ```
-
 
 
 <!-- USAGE EXAMPLES -->
 ## Usage
+To take images with RPi use the for_pi/image_capture_timed.py or for_pi/image_capture_host_trigger.py
+For the timed trigger run the script on the RPi and follow the console prompts. It will set the capture to go off at timed intervals for the amount of time you set.
 
-Use this space to show useful examples of how a project can be used. Additional screenshots, code examples and demos work well in this space. You may also link to more resources.
+For the trigger scripts run the script on the RPi making sure to host the server on your local network. Using another device navigate to the page and tap the "take picture" button to trigger an image capture on the RPi.
 
-_For more examples, please refer to the [Documentation](https://example.com)_
-
-
-
-<!-- ROADMAP -->
-## Roadmap
-
-See the [open issues](https://github.com/github_username/repo_name/issues) for a list of proposed features (and known issues).
-
-
-
-<!-- CONTRIBUTING -->
-## Contributing
-
-Contributions are what make the open source community such an amazing place to be learn, inspire, and create. Any contributions you make are **greatly appreciated**.
-
-1. Fork the Project
-2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the Branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-
-
-<!-- LICENSE -->
-## License
-
-Distributed under the MIT License. See `LICENSE` for more information.
-
-
-
-<!-- CONTACT -->
-## Contact
-
-Your Name - [@twitter_handle](https://twitter.com/twitter_handle) - email
-
-Project Link: [https://github.com/github_username/repo_name](https://github.com/github_username/repo_name)
-
-
-
-<!-- ACKNOWLEDGEMENTS -->
-## Acknowledgements
-
-* []()
-* []()
-* []()
-
-
-
-
+Once the picture have been taken use a USB stick, or any other method, to transfer the files from the RPi to your main computer.
+The images should be placed in the web_host/static/image folder
+Now run web_host/main_host.py.
+Next, navigate to the local webpage indicated in the console.
+The webpage contains instructions on how to analyse the images from here and notes on inerpretting the results.
 
 <!-- MARKDOWN LINKS & IMAGES -->
 <!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
