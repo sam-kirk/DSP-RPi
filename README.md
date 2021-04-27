@@ -35,8 +35,6 @@
       </ul>
     </li>
     <li><a href="#usage">Usage</a></li>
-    <li><a href="#contact">Contact</a></li>
-    <li><a href="#acknowledgements">Acknowledgements</a></li>
   </ol>
 </details>
 
@@ -66,10 +64,7 @@ To get a local copy up and running follow these simple steps.
 ### Installation
 
 1. Clone the repo
-   ```sh
-   git clone https://github.com/Mrbeekon/DSP-RPi.git
-   ```
-2. Install imports
+2. Install the dependancies (all imports listed below)
    ```sh
    from flask import Flask, session, request, render_template, redirect
    import glob
@@ -81,6 +76,14 @@ To get a local copy up and running follow these simple steps.
    from skimage import measure
    import imutils
    import matplotlib
+   ```
+   
+   On RPi
+   ```sh
+   from flask import Flask, request, render_template
+   from picamera import PiCamera
+   from datetime import datetime
+   from time import sleep
    ```
 
 
