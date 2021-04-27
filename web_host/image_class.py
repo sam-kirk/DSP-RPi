@@ -12,16 +12,16 @@
 # - Alexander Mordvintsev & Abid K. 2013 at
 #   https://opencv-python-tutroals.readthedocs.io/en/latest/py_tutorials/py_feature2d/py_feature_homography/py_feature_homography.html
 #   accessed March 2021
-# - https://docs.opencv.org/3.4/d3/dc0/group__imgproc__shape.html#ga014b28e56cb8854c0de4a211cb2be656 accessed March 2021
+# - OpenCV https://docs.opencv.org/3.4/d3/dc0/group__imgproc__shape.html#ga014b28e56cb8854c0de4a211cb2be656 accessed March 2021
 
 import cv2
 import numpy as np
-import matplotlib
-matplotlib.use('agg')
 import matplotlib.pyplot as plt
 from imutils import contours
 from skimage import measure
 import imutils
+import matplotlib
+matplotlib.use('agg')
 
 # constants
 FILE_TYPE = ".png"
@@ -51,9 +51,8 @@ class Image:
     name = ""
     dir = ""
     full_path = ""
-    raw_bitmap = []
 
-    # constructor only includes name and dir as all other data is dependent on these values
+    # constructor only includes name and dir as full path is dependent on these values
     def __init__(self, name, dir):
         self.name = name
         self.dir = dir
@@ -69,16 +68,20 @@ class Image:
 
     # run all the image processing functions
     # params - norm:boolean, comp_img_path:string, comps:int
-    # returns - None
+    # returns - data:list
     def process_image_full(self, norm, comp_img_path, comps):
-        data = [self.preprocess_image(), self.create_ndvi_images(norm), self.create_colour_bar_image(),
-                self.create_cmap_image(), self.object_detection(), self.main_crop_extraction(),
+        data = [self.preprocess_image(),
+                self.create_ndvi_images(norm),
+                self.create_colour_bar_image(),
+                self.create_cmap_image(),
+                self.object_detection(),
+                self.main_crop_extraction(),
                 self.is_match(comp_img_path, comps)]
         return data
 
     # run all the image processing functions except the comparison
     # params - norm:boolean
-    # returns - None
+    # returns - data:list
     def process_image(self, norm):
         data = [self.full_path,
                 self.preprocess_image(),
@@ -135,7 +138,7 @@ class Image:
         # convert to gray image
         img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-        # normalise the image todo fine tune
+        # normalise the image
         if normalise:
             img = cv2.subtract(img, (165), None)
             img = cv2.multiply(img, (10), None)
@@ -147,7 +150,7 @@ class Image:
     # uses matplotlib plt to create a new image with a colourbar for easier estimation of crop performance and saves it
     # params - None
     # returns - [file save location]:string
-    def create_colour_bar_image(self):  # todo neaten
+    def create_colour_bar_image(self):
         img = cv2.imread(self.attach_name_tail(NDVI_COLOUR_NAME_TAIL))
         fig, ax = plt.subplots()
         cax = ax.imshow(img, vmin=0, vmax=255)
@@ -172,12 +175,10 @@ class Image:
         # blur to reduce noise and add softness to edges
         img_g_blur = cv2.GaussianBlur(img_g, (35, 35), 0)
 
-        '''# erode and dilate to remove small blobs
-        img_g_blur = cv2.erode(img_g_blur, None, iterations=2)
-        img_g_blur = cv2.dilate(img_g_blur, None, iterations=4)'''
-
         # create an iterable list of masks to overlay classified by dead, unhealthy, healthy and very healthy thresholds
-        masks = [cv2.inRange(img_g_blur, VH, 255), cv2.inRange(img_g_blur, H, VH), cv2.inRange(img_g_blur, UH, H),
+        masks = [cv2.inRange(img_g_blur, VH, 255),
+                 cv2.inRange(img_g_blur, H, VH),
+                 cv2.inRange(img_g_blur, UH, H),
                  cv2.inRange(img_g_blur, D, UH)]
 
         # create label lists for formatting
@@ -196,7 +197,7 @@ class Image:
                 continue
 
             # sort contours by size so only biggest of colour is labeled
-            mask = sorted(contours.sort_contours(mask)[0], key=lambda x: cv2.contourArea(x), reverse=True) # todo sometimes not visable
+            mask = sorted(contours.sort_contours(mask)[0], key=lambda x: cv2.contourArea(x), reverse=True)
 
             # for each contour in the mask add to overlay
             for (j, c) in enumerate(mask):
@@ -205,7 +206,7 @@ class Image:
                 # fill contour with colour
                 cv2.fillPoly(overlay, pts=[c], color=colours[i])
                 if j == 0:
-                    cv2.putText(overlay, labels[i], (x + h // 2, y + h // 2),
+                    cv2.putText(overlay, labels[i], ((x + h // 2)+(i*20), (y + h // 2)+(i*20)),
                                 cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
 
         # apply overlay
@@ -213,14 +214,13 @@ class Image:
         # higher alpha the more prominent the overlay
         alpha = 0.6
         cv2.addWeighted(overlay, alpha, img, 1-alpha, 0, output)
-
         cv2.imwrite(self.attach_name_tail(NDVI_COLOUR_MAP_NAME_TAIL), output)
         return self.attach_name_tail(NDVI_COLOUR_MAP_NAME_TAIL)
 
     # create a mask of crop objects from the greyscale image to identify main crop and anomalies
     # params - None
     # returns - [file save location]:string
-    def object_detection(self):  # todo needs softening
+    def object_detection(self):
         # read in file convert to a cv2 grayscale format
         img = cv2.imread(self.attach_name_tail(NDVI_GRAY_NAME_TAIL))
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -233,9 +233,6 @@ class Image:
         # if the pixel >= 200 it becomes white if pixel < 200 it is black
         # [0] returns threshold value [1] returns bitmap
         thresh = cv2.threshold(blurred, H, 255, cv2.THRESH_BINARY)[1]
-
-        #self.quick_show(thresh)
-        #cv2.imwrite(self.attach_name_tail('_threshmask'), thresh)
 
         # perform a series of erosions and dilations to remove small blobs from the thresholded image
         thresh = cv2.erode(thresh, None, iterations=2)
@@ -261,8 +258,6 @@ class Image:
             if num_pixels > BLOB_SIZE:  # number of pixels to be a large blob
                 mask = cv2.add(mask, label_mask)
 
-
-
         # find the contours in the mask, then sort them from left to right
         cnts = cv2.findContours(mask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         cnts = imutils.grab_contours(cnts)
@@ -281,7 +276,6 @@ class Image:
                 c_h = cv2.convexHull(c)
                 cv2.drawContours(img, [c], 0, (255, 0, 0), 3)
                 cv2.drawContours(img, [c_h], 0, (255, 0, 200), 3)
-                #self.quick_show(img)
 
                 # calculate the perimeter area ration and represent the difference as a percentage
                 perimeter_area_ratio_c = cv2.arcLength(c, True) / cv2.contourArea(c)
@@ -366,12 +360,11 @@ class Image:
                 mask = np.zeros_like(image)  # Create mask where white is what we want, black otherwise
                 cv2.fillPoly(mask, [c], [255,255,255])  # Draw filled contour in mask
 
-                #cv2.imwrite(self.attach_name_tail('_maincropextract'), mask)
+                # make array of non-white pixels
                 sel = mask != 255
-                #self.quick_show(mask)
-
+                # make all non-white pixels black in image
                 image[sel] = 0
-                #self.quick_show(image)
+
                 # Now crop
                 # get bounding rectangle to crop to
                 (x, y, w, h) = cv2.boundingRect(c)
@@ -388,7 +381,7 @@ class Image:
     # params - min_match_count:int
     # returns - match:boolean, [file save location]:string
     def is_match(self, second_img_path, min_match_count):
-        img1 = cv2.imread(self.attach_name_tail(NDVI_COLOUR_NAME_TAIL))
+        img1 = cv2.imread(self.full_path)
         img2 = cv2.imread(second_img_path)
 
         img1 = cv2.cvtColor(img1, cv2.COLOR_BGR2GRAY)
@@ -422,10 +415,12 @@ class Image:
 
         img3 = cv2.drawMatches(img1, kp1, img2, kp2, good, None, flags=2)
 
-        #self.quick_show(img3)
         cv2.imwrite(self.attach_name_tail(NDVI_MATCH_NAME_TAIL), img3)
         return match, self.attach_name_tail(NDVI_MATCH_NAME_TAIL)
 
+    # shows the img from the given parameter in a new window, useful for debugging or editing code
+    # params - img:cv2 image
+    # returns - None
     @staticmethod
     def quick_show(img):
         cv2.imshow("Img", img)
