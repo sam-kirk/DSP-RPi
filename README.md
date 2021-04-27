@@ -90,13 +90,14 @@ To get a local copy up and running follow these simple steps.
 <!-- USAGE EXAMPLES -->
 ## Usage
 To take images with RPi:
+
 1.Use the for_pi/image_capture_timed.py or for_pi/image_capture_host_trigger.py
 
-  a.For the timed trigger:
+For the timed trigger:
     1. Run the script on the RPi and follow the console prompts
     2. It will set the capture to go off at timed intervals for the amount of time you set
 
-  b.For the host trigger scripts:
+For the host trigger scripts:
     1. Run the script on the RPi making sure to host the server on your local network
     2. Using another device navigate to the page and tap the "take picture" button to trigger an image capture on the RPi.
 
