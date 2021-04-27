@@ -14,15 +14,6 @@
 <br />
 <p align="center">
   <h3 align="center">Raspberry Pi NoIR as a Low-cost NDVI Remote Sensing Device for Land Monitoring</h3>
-
-  <p align="center">
-    project_description
-    <br />
-    <a href="https://github.com/github_username/repo_name"><strong>Explore the docs »</strong></a>
-    <br />
-    <br />
-    <a href="https://github.com/Mrbeekon/DSP-RPi">View Project</a>
-  </p>
 </p>
 
 
@@ -58,18 +49,16 @@
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
-[![Product Name Screen Shot][product-screenshot]](https://example.com)
+This system was developed to allow more people access to NDVI remote sensing technology to assess plant health with the goal of contibuting to Smart Farming research.
 
-Here's a blank template to get started:
-**To avoid retyping too much info. Do a search and replace with your text editor for the following:**
-`github_username`, `repo_name`, `twitter_handle`, `email`, `project_title`, `project_description`
+It uses a RPi NoIR camera to take NIR birds eye view images of crops. The images are then processed and analysed for insights which are presented in a local web-app front-end.
 
 
 ### Built With
 
-* [](Python)
-* [](OpenCV)
-* [](Flask)
+* []()Python
+* []()OpenCV
+* []()Flask
 
 
 
@@ -78,19 +67,11 @@ Here's a blank template to get started:
 
 To get a local copy up and running follow these simple steps.
 
-### Prerequisites
-
-This is an example of how to list things you need to use the software and how to install them.
-* npm
-  ```sh
-  npm install npm@latest -g
-  ```
-
 ### Installation
 
 1. Clone the repo
    ```sh
-   git clone https://github.com/github_username/repo_name.git
+   git clone https://github.com/Mrbeekon/DSP-RPi
    ```
 2. Install NPM packages
    ```sh
