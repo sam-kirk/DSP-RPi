@@ -89,16 +89,22 @@ To get a local copy up and running follow these simple steps.
 
 <!-- USAGE EXAMPLES -->
 ## Usage
-To take images with RPi use the for_pi/image_capture_timed.py or for_pi/image_capture_host_trigger.py
-For the timed trigger run the script on the RPi and follow the console prompts. It will set the capture to go off at timed intervals for the amount of time you set.
+To take images with RPi:
+1.Use the for_pi/image_capture_timed.py or for_pi/image_capture_host_trigger.py
 
-For the trigger scripts run the script on the RPi making sure to host the server on your local network. Using another device navigate to the page and tap the "take picture" button to trigger an image capture on the RPi.
+  a.For the timed trigger:
+    1. Run the script on the RPi and follow the console prompts
+    2. It will set the capture to go off at timed intervals for the amount of time you set
 
-Once the picture have been taken use a USB stick, or any other method, to transfer the files from the RPi to your main computer.
-The images should be placed in the web_host/static/image folder
-Now run web_host/main_host.py.
-Next, navigate to the local webpage indicated in the console.
-The webpage contains instructions on how to analyse the images from here and notes on inerpretting the results.
+  b.For the host trigger scripts:
+    1. Run the script on the RPi making sure to host the server on your local network
+    2. Using another device navigate to the page and tap the "take picture" button to trigger an image capture on the RPi.
+
+2. Once the picture have been taken use a USB stick, or any other method, to transfer the files from the RPi to your main computer
+3. The images should be placed in the web_host/static/image folder
+4. Now run web_host/main_host.py.
+5. Next, navigate to the local webpage indicated in the console.
+6. Finally, the webpage contains instructions on how to analyse the images and inerpret the results.
 
 <!-- MARKDOWN LINKS & IMAGES -->
 <!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
