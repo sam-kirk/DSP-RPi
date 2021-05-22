@@ -11,8 +11,8 @@ def image_capture():
         take_picture = request.form.get("take_picture")
         print('Take picture? = ', take_picture)
         if take_picture == "t":
-            timestamp = datetime.now().strftime("_%Y-%m-%d_%H-%M-%S")
-            image_src = "static/raw-image" + timestamp + ".png"
+            timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+            image_src = "raw_images/" + timestamp + ".png"
             # print('bing')
             camera.start_preview()
             # sleep(2)

@@ -27,7 +27,7 @@ if __name__ == '__main__':
         for i in range(x):
             print('image ' + str(i+1) + ' start')
             sleep(d)
-            timestamp = datetime.now().strftime("_%Y-%m-%d_%H-%M-%S")
+            timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
             image_src = "raw_images/" + timestamp + ".png"
             camera.capture(image_src)
             print('image ' + str(i) + ' done')
