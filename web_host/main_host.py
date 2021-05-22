@@ -21,35 +21,6 @@ try:
 except ImportError:
     is_pi = False
 
-# Plain Old Python defs
-# takes all images in file path and creates a new Image object for each
-# Image objects are appended to a list and the list is returned
-'''def load_image_set(f_path, term):
-    images = []  # for storing image objects for this set
-    for file in glob.glob(f_path + term):  # for each file that matches the term in the given filepath
-        # only process the raw images
-        if len(re.findall("_[0-9][0-9]-[0-9][0-9]-[0-9][0-9]\Z", file.split(".")[0])) > 0:
-            image = Image(file.split("/")[-1], f_path)  # get the filename at the end of the glob path
-            images.append(image)
-
-    return images'''
-
-
-def mock_function(images):  # todo rename
-    print("---- Mock Function Called")
-    #images[0].preprocess_image()
-    #images[0].create_ndvi_images(True)
-    #images[0].create_colour_bar_image()
-    #images[0].create_cmap_image()
-    #images[0].object_detection()
-    images[0].main_crop_extraction()
-    #images[0].is_match('working_image_sets/raw_image_blue_filter copy/2021-03-25_14-07-57.png', 10)
-
-    #images[0].process_image_full(True, 'working_image_sets/raw_image_blue_filter copy/2021-03-25_14-07-57.png', 10)
-    '''for image in images:
-        image.process_image_full(True, 'working_image_sets/raw_image_blue_filter copy/2021-03-25_14-07-57.png', 10)'''
-
-
 app = Flask(__name__)
 
 # should be secret but not required for local hosting

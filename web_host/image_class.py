@@ -121,7 +121,7 @@ class Image:
         # ndvi equation
         ndvi_bitmap = (r_ch - b_ch) / r_b_sum
 
-        # easiest way to convert to cv2 type is through write then read todo could be inefficient
+        # easiest way to convert to cv2 type is through write then read
         # save original ndvi bitmap
         save_path = self.attach_name_tail(NDVI_COLOUR_NAME_TAIL)
         plt.imsave(save_path, ndvi_bitmap)
@@ -135,7 +135,7 @@ class Image:
         # convert to gray image
         img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-        # normalise the image todo fine tune
+        # normalise the image
         if normalise:
             img = cv2.subtract(img, (165), None)
             img = cv2.multiply(img, (10), None)
@@ -147,7 +147,7 @@ class Image:
     # uses matplotlib plt to create a new image with a colourbar for easier estimation of crop performance and saves it
     # params - None
     # returns - [file save location]:string
-    def create_colour_bar_image(self):  # todo neaten
+    def create_colour_bar_image(self):
         img = cv2.imread(self.attach_name_tail(NDVI_COLOUR_NAME_TAIL))
         fig, ax = plt.subplots()
         cax = ax.imshow(img, vmin=0, vmax=255)
@@ -196,7 +196,7 @@ class Image:
                 continue
 
             # sort contours by size so only biggest of colour is labeled
-            mask = sorted(contours.sort_contours(mask)[0], key=lambda x: cv2.contourArea(x), reverse=True) # todo sometimes not visable
+            mask = sorted(contours.sort_contours(mask)[0], key=lambda x: cv2.contourArea(x), reverse=True)
 
             # for each contour in the mask add to overlay
             for (j, c) in enumerate(mask):
@@ -220,7 +220,7 @@ class Image:
     # create a mask of crop objects from the greyscale image to identify main crop and anomalies
     # params - None
     # returns - [file save location]:string
-    def object_detection(self):  # todo needs softening
+    def object_detection(self):
         # read in file convert to a cv2 grayscale format
         img = cv2.imread(self.attach_name_tail(NDVI_GRAY_NAME_TAIL))
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -356,22 +356,17 @@ class Image:
         for (i, c) in enumerate(cnts):
             # take the largest contour by area as main crop
             if i == 0:
-
-                '''mask = np.zeros_like(image)  # Create mask where white is what we want, black otherwise
-                cv2.drawContours(mask, [c], 0, 255, -1)  # Draw filled contour in mask
-                out = np.zeros_like(image)  # Extract out the object and place into output image
-                out[mask == x] = image[mask == x]
-                self.quick_show(out)'''
-
                 mask = np.zeros_like(image)  # Create mask where white is what we want, black otherwise
                 cv2.fillPoly(mask, [c], [255,255,255])  # Draw filled contour in mask
 
                 #cv2.imwrite(self.attach_name_tail('_maincropextract'), mask)
+                # where the pixels are not black add them to selection
                 sel = mask != 255
                 #self.quick_show(mask)
 
                 image[sel] = 0
                 #self.quick_show(image)
+
                 # Now crop
                 # get bounding rectangle to crop to
                 (x, y, w, h) = cv2.boundingRect(c)
