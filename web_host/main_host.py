@@ -3,47 +3,69 @@
 """
 Created on Tue Nov 10 15:55:22 2020
 
-@author: sam
+@author: sam kirk
+
+@purpose: This runs the web host for the NDVI analysis system navigate to 0.0.0.0/home on run
 """
-from flask import Flask, session, request, render_template, redirect
+from flask import Flask, session, request, render_template, redirect, url_for, send_from_directory, send_file
+import os
+from time import sleep
+from datetime import datetime
 import glob
 from image_class import Image
+import itertools
 import re
-
-#if running on pi image_capture can run
-try:
-    from picamera import PiCamera
-    is_pi = True
-except ImportError:
-    is_pi = False
-
-# Plain Old Python defs
-# takes all images in file path and creates a new Image object for each
-# Image objects are appended to a list and the list is returned
 
 app = Flask(__name__)
 
 # should be secret but not required for local hosting
-app.secret_key = b'_5#y2L"F4Q9z\n\xec]/'
+app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
 
 
-@app.route("/home")
-def home():
-    print("-home")
-    return render_template("home.html")
+# find all the raw files in static/images
+def find_files():
+    f_path = 'static/images/'
+    term = '*.png'
+    raw_files = []  # for storing image objects for this set
+    for file in glob.glob(f_path + term):  # for each file that matches the term in the given filepath
+        # only allow the raw images i.e. filenames without a text tag
+        if len(re.findall("_[0-9][0-9]-[0-9][0-9]-[0-9][0-9]\Z", file.split(".")[0])) > 0:
+            raw_files.append(file)
+    print(raw_files)
+    return raw_files
 
 
-# controller function
+# splits a full filepath into name and path
+def split_path(path):
+    name = path.rsplit("/", 1)[-1]
+    path = path.rsplit("/", 1)[0] + "/"
+    return name, path
+
+
+# disable caching to allow for new image matches to be completed
+@app.after_request
+def add_header(r):
+    """
+    Code fix from stackoverflow: https://stackoverflow.com/questions/34066804/disabling-caching-in-flask
+    Add headers to both force latest IE rendering engine or Chrome Frame,
+    and also to cache the rendered page for 10 minutes.
+    """
+    r.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    r.headers["Pragma"] = "no-cache"
+    r.headers["Expires"] = "0"
+    r.headers['Cache-Control'] = 'public, max-age=0'
+    return r
+
+
 @app.route("/analysis_action", methods=["POST"])
 def analysis_action():
     print("-analysis_action")
     fpath = request.form.get("option")
-    if fpath == "":
-        fpath = "[Empty]"
-    else:
+    if fpath != "":
         # split the filepath into name and path
-        fname = fpath.rsplit("/", 1)[-1]
-        fpath = fpath.rsplit("/", 1)[0] + "/"
+        fname, fpath = split_path(fpath)
+
+        # create the object to run analysis
         image = Image(fname, fpath)
         paths = image.process_image(True)  # run analysis with normalisation
 
@@ -53,93 +75,83 @@ def analysis_action():
         paths.insert(2, tple[0])
         paths.insert(3, tple[1])
 
+        # titles for the constructed HTML
         titles = ["Original Image", "Pre Processed Image", "NDVI Grey", "NDVI Colour",
                   "NDVI Colour Bar", "NDVI Colour Map", "Object Detection", "Crop Extraction"]
+        print('p= ', paths)
 
+        # now construct the HTML for displaying the images
         image_HTML = ""
         for i in range(len(paths)):
             new_section = "<div class='output' style='padding: 10px 0px'><h3>" + titles[i] +\
-                          "</h3><hr style='border-top: 1px dashed #333333; width: 40%; margin: 0px;'><img class='output_image' src='" +\
-                          paths[i] + "'><p>@location " + paths[i] + "</p></div>"
+                          "</h3><hr style='border-top: 1px dashed #333333; width: 40%; margin: 0px;'>" \
+                          "<img class='output_image' src='" + paths[i] + "'><p>@location " + paths[i] + "</p></div>"
             image_HTML = image_HTML + new_section
 
         session['image_HTML'] = image_HTML
     return redirect("analysis")
 
-# controller function
+
 @app.route("/image_match_action", methods=["POST"])
 def image_match_action():
     print("-image_match_action")
     fpath1 = request.form.get("option1")
     fpath2 = request.form.get("option2")
-
-    session['match_HTML'] = ""
-
-    if fpath1 == "" or fpath2 == "":
-        fpath1 = "[Empty]"
-        fpath2 = "[Empty]"
-    else:
+    if fpath1 != "" and fpath1 != "":
         # split the filepath into name and path
-        fname1 = fpath1.rsplit("/", 1)[-1]
-        fpath1 = fpath1.rsplit("/", 1)[0] + "/"
+        fname1, fpath1 = split_path(fpath1)
+
+        # create the object for analysis
         image = Image(fname1, fpath1)
 
         paths = []
-        print(image.full_path)
-        print("fpath op 2 = ", fpath2)
+        # call the image match analysis function with second path
         res = image.is_match(fpath2, 10)  # run match with 10 good matches
-
+        # index 1 will be the image path index 0 is the boolean result of the match
         paths.append(res[1])
         titles = ["Image Match"]
         print('p= ', paths)
+        # construct the HTML
         match_HTML = ""
         for i in range(len(paths)):
             new_section = "<div class='output' style='padding: 10px 0px'><h3>" + titles[i] + ' - <i>' + str(res[0]) +\
-                          "</i></h3><hr style='border-top: 1px dashed #333333; width: 40%; margin: 0px;'><img class='output_image' src='" +\
-                          paths[i] + "'><p>@location " + paths[i] + "</p></div>"
+                          "</i></h3><hr style='border-top: 1px dashed #333333; width: 40%; margin: 0px;" \
+                          "'><img class='output_image' src='" + paths[i] + "'><p>@location " + paths[i] + "</p></div>"
             match_HTML = match_HTML + new_section
         session['match_HTML'] = match_HTML
     return redirect("image_match")
 
 
-@app.route("/analysis", methods=["POST", "GET"])
+@app.route("/analysis")
 def analysis():
     print("-analysis")
-    f_path = 'static/images/'
-    term = '*.png'
-    raw_files = []  # for storing image objects for this set
-    for file in glob.glob(f_path + term):  # for each file that matches the term in the given filepath
-        # only process the raw images
-        if len(re.findall("_[0-9][0-9]-[0-9][0-9]-[0-9][0-9]\Z", file.split(".")[0])) > 0:
-            raw_files.append(file)
-    print(raw_files)
+    drop_down = find_files()
     try:
         image_HTML = session['image_HTML']
     except:
         image_HTML = '<p>Choose an image to analyse and the output will be shown below</p>'
+    # render with args
+    return render_template("analysis.html", image_HTML=image_HTML, raw_files=drop_down)
 
-    return render_template("analysis.html", image_HTML=image_HTML, raw_files=raw_files)
 
-
-@app.route("/image_match", methods=["POST", "GET"])
+@app.route("/image_match")
 def image_match():
     print("-image_match")
-    f_path = 'static/images/'
-    term = '*.png'
-    raw_files = []  # for storing image objects for this set
-    for file in glob.glob(f_path + term):  # for each file that matches the term in the given filepath
-        # only process the raw images
-        if len(re.findall("_[0-9][0-9]-[0-9][0-9]-[0-9][0-9]\Z", file.split(".")[0])) > 0:
-            raw_files.append(file)
+    drop_down = find_files()
     try:
         match_HTML = session['match_HTML']
     except:
         match_HTML = '<p>Choose two images to compare and the output will be shown below</p>'
+    # render with args
+    return render_template("image_match.html", match_HTML=match_HTML, raw_files=drop_down)
 
-    return render_template("image_match.html", match_HTML=match_HTML, raw_files=raw_files)
+
+@app.route("/home")
+def home():
+    print("-home")
+    return render_template("home.html")
 
 
-# @app.route("/analysis", methods=["POST", "GET"])
 @app.route("/help", methods=["POST", "GET"])
 def help():
     print("-help")
@@ -147,8 +159,6 @@ def help():
 
 
 if __name__ == "__main__":
-    #image = Image("2021-03-25_14-08-07.png", "static/images/")
-    #image.process_image(True)
     app.run(host="0.0.0.0")
 
 

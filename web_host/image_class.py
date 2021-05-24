@@ -12,16 +12,17 @@
 # - Alexander Mordvintsev & Abid K. 2013 at
 #   https://opencv-python-tutroals.readthedocs.io/en/latest/py_tutorials/py_feature2d/py_feature_homography/py_feature_homography.html
 #   accessed March 2021
-# - OpenCV https://docs.opencv.org/3.4/d3/dc0/group__imgproc__shape.html#ga014b28e56cb8854c0de4a211cb2be656 accessed March 2021
+# - https://docs.opencv.org/3.4/d3/dc0/group__imgproc__shape.html#ga014b28e56cb8854c0de4a211cb2be656 accessed March 2021
 
 import cv2
 import numpy as np
-import matplotlib.pyplot as plt
 from imutils import contours
 from skimage import measure
 import imutils
 import matplotlib
+import matplotlib.pyplot as plt
 matplotlib.use('agg')
+
 
 # constants
 FILE_TYPE = ".png"
@@ -51,8 +52,9 @@ class Image:
     name = ""
     dir = ""
     full_path = ""
+    raw_bitmap = []
 
-    # constructor only includes name and dir as full path is dependent on these values
+    # constructor only includes name and dir as all other data is dependent on these values
     def __init__(self, name, dir):
         self.name = name
         self.dir = dir
@@ -68,20 +70,16 @@ class Image:
 
     # run all the image processing functions
     # params - norm:boolean, comp_img_path:string, comps:int
-    # returns - data:list
+    # returns - None
     def process_image_full(self, norm, comp_img_path, comps):
-        data = [self.preprocess_image(),
-                self.create_ndvi_images(norm),
-                self.create_colour_bar_image(),
-                self.create_cmap_image(),
-                self.object_detection(),
-                self.main_crop_extraction(),
+        data = [self.preprocess_image(), self.create_ndvi_images(norm), self.create_colour_bar_image(),
+                self.create_cmap_image(), self.object_detection(), self.main_crop_extraction(),
                 self.is_match(comp_img_path, comps)]
         return data
 
     # run all the image processing functions except the comparison
     # params - norm:boolean
-    # returns - data:list
+    # returns - None
     def process_image(self, norm):
         data = [self.full_path,
                 self.preprocess_image(),
@@ -124,7 +122,7 @@ class Image:
         # ndvi equation
         ndvi_bitmap = (r_ch - b_ch) / r_b_sum
 
-        # easiest way to convert to cv2 type is through write then read todo could be inefficient
+        # easiest way to convert to cv2 type is through write then read
         # save original ndvi bitmap
         save_path = self.attach_name_tail(NDVI_COLOUR_NAME_TAIL)
         plt.imsave(save_path, ndvi_bitmap)
@@ -156,7 +154,7 @@ class Image:
         cax = ax.imshow(img, vmin=0, vmax=255)
         ax.set_title('NDVI Image')
         # Add colourbar
-        cbar = fig.colorbar(cax, ticks=[0, 0.33*255, 0.66*255, 255], shrink=0.5)
+        cbar = fig.colorbar(cax, ticks=[0, 0.33 * 255, 0.66 * 255, 255], shrink=0.5)
         cbar.ax.set_yticklabels(['<0', '0.33', '0.66', '1'])
         plt.axis('off')
         plt.savefig(self.dir + self.name.split('.')[0] + '_ndvi-c-bar.png', format='png', dpi=800)
@@ -176,9 +174,7 @@ class Image:
         img_g_blur = cv2.GaussianBlur(img_g, (35, 35), 0)
 
         # create an iterable list of masks to overlay classified by dead, unhealthy, healthy and very healthy thresholds
-        masks = [cv2.inRange(img_g_blur, VH, 255),
-                 cv2.inRange(img_g_blur, H, VH),
-                 cv2.inRange(img_g_blur, UH, H),
+        masks = [cv2.inRange(img_g_blur, VH, 255), cv2.inRange(img_g_blur, H, VH), cv2.inRange(img_g_blur, UH, H),
                  cv2.inRange(img_g_blur, D, UH)]
 
         # create label lists for formatting
@@ -206,14 +202,15 @@ class Image:
                 # fill contour with colour
                 cv2.fillPoly(overlay, pts=[c], color=colours[i])
                 if j == 0:
-                    cv2.putText(overlay, labels[i], ((x + h // 2)+(i*20), (y + h // 2)+(i*20)),
+                    cv2.putText(overlay, labels[i], (x + h // 2, y + h // 2),
                                 cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
 
         # apply overlay
         output = np.zeros(img.shape, dtype="uint8")
         # higher alpha the more prominent the overlay
         alpha = 0.6
-        cv2.addWeighted(overlay, alpha, img, 1-alpha, 0, output)
+        cv2.addWeighted(overlay, alpha, img, 1 - alpha, 0, output)
+
         cv2.imwrite(self.attach_name_tail(NDVI_COLOUR_MAP_NAME_TAIL), output)
         return self.attach_name_tail(NDVI_COLOUR_MAP_NAME_TAIL)
 
@@ -234,11 +231,14 @@ class Image:
         # [0] returns threshold value [1] returns bitmap
         thresh = cv2.threshold(blurred, H, 255, cv2.THRESH_BINARY)[1]
 
+        # self.quick_show(thresh)
+        # cv2.imwrite(self.attach_name_tail('_threshmask'), thresh)
+
         # perform a series of erosions and dilations to remove small blobs from the thresholded image
         thresh = cv2.erode(thresh, None, iterations=2)
         thresh = cv2.dilate(thresh, None, iterations=4)
 
-        # perform a connected component analysis on the thresholded image
+        # perform a connected component analysis labeling on the thresholded image
         # then initialize a mask to store only the "large" components
         labels = measure.label(thresh, connectivity=2, background=0)  # image with labels
         mask = np.zeros(thresh.shape, dtype="uint8")
@@ -251,6 +251,7 @@ class Image:
             # otherwise, construct the label mask and count the
             # number of pixels
             label_mask = np.zeros(thresh.shape, dtype="uint8")
+            # make the component white
             label_mask[labels == label] = 255
             num_pixels = cv2.countNonZero(label_mask)
             # if the number of pixels in the component is sufficiently large
@@ -276,16 +277,17 @@ class Image:
                 c_h = cv2.convexHull(c)
                 cv2.drawContours(img, [c], 0, (255, 0, 0), 3)
                 cv2.drawContours(img, [c_h], 0, (255, 0, 200), 3)
+                # self.quick_show(img)
 
                 # calculate the perimeter area ration and represent the difference as a percentage
                 perimeter_area_ratio_c = cv2.arcLength(c, True) / cv2.contourArea(c)
                 perimeter_area_ratio_c_h = cv2.arcLength(c_h, True) / cv2.contourArea(c_h)
-                match = 1-(perimeter_area_ratio_c_h/perimeter_area_ratio_c)
+                match = 1 - (perimeter_area_ratio_c_h / perimeter_area_ratio_c)
 
-                cv2.putText(img, "#" + str(i+1) + " main crop", (x + w//2, y + h//2),
+                cv2.putText(img, "#" + str(i + 1) + " main crop", (x + w // 2, y + h // 2),
                             cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
                 cv2.putText(img, "edge effect: " + str(round((1 - match) * 100, 1)) + "%",
-                            (x + w // 2, (y + h // 2)+30),
+                            (x + w // 2, (y + h // 2) + 30),
                             cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 200), 2)
 
             else:
@@ -293,11 +295,11 @@ class Image:
                 (x, y, w, h) = cv2.boundingRect(c)
                 ((cX, cY), radius) = cv2.minEnclosingCircle(c)
                 cv2.drawContours(img, [c], 0, (0, 0, 200), 3)
-                cv2.circle(img, (int(cX), int(cY)), int(radius),(0, 0, 255), 3)
+                cv2.circle(img, (int(cX), int(cY)), int(radius), (0, 0, 255), 3)
                 cv2.putText(img, "#{} anomaly".format(i + 1), (x, y - 15),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
 
-        #self.quick_show(img)
+        # self.quick_show(img)
         cv2.imwrite(self.attach_name_tail(NDVI_OBJECTS_NAME_TAIL), img)
         return self.attach_name_tail(NDVI_OBJECTS_NAME_TAIL)
 
@@ -350,20 +352,17 @@ class Image:
         for (i, c) in enumerate(cnts):
             # take the largest contour by area as main crop
             if i == 0:
-
-                '''mask = np.zeros_like(image)  # Create mask where white is what we want, black otherwise
-                cv2.drawContours(mask, [c], 0, 255, -1)  # Draw filled contour in mask
-                out = np.zeros_like(image)  # Extract out the object and place into output image
-                out[mask == x] = image[mask == x]
-                self.quick_show(out)'''
-
                 mask = np.zeros_like(image)  # Create mask where white is what we want, black otherwise
-                cv2.fillPoly(mask, [c], [255,255,255])  # Draw filled contour in mask
+                cv2.fillPoly(mask, [c], [255, 255, 255])  # Draw filled contour in mask
 
-                # make array of non-white pixels
+                # cv2.imwrite(self.attach_name_tail('_maincropextract'), mask)
+                # where the pixels are not black add them to selection
                 sel = mask != 255
-                # make all non-white pixels black in image
+                # self.quick_show(mask)
+
+                # now use the stencil to show only the ROI in the image
                 image[sel] = 0
+                # self.quick_show(image)
 
                 # Now crop
                 # get bounding rectangle to crop to
@@ -415,12 +414,10 @@ class Image:
 
         img3 = cv2.drawMatches(img1, kp1, img2, kp2, good, None, flags=2)
 
+        # self.quick_show(img3)
         cv2.imwrite(self.attach_name_tail(NDVI_MATCH_NAME_TAIL), img3)
         return match, self.attach_name_tail(NDVI_MATCH_NAME_TAIL)
 
-    # shows the img from the given parameter in a new window, useful for debugging or editing code
-    # params - img:cv2 image
-    # returns - None
     @staticmethod
     def quick_show(img):
         cv2.imshow("Img", img)
