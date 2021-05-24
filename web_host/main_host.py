@@ -35,6 +35,13 @@ def find_files():
     return raw_files
 
 
+# splits a full filepath into name and path
+def split_path(path):
+    name = path.rsplit("/", 1)[-1]
+    path = path.rsplit("/", 1)[0] + "/"
+    return name, path
+
+
 # disable caching to allow for new image matches to be completed
 @app.after_request
 def add_header(r):
@@ -54,12 +61,11 @@ def add_header(r):
 def analysis_action():
     print("-analysis_action")
     fpath = request.form.get("option")
-    if fpath == "":
-        fpath = "[Empty]"
-    else:
+    if fpath != "":
         # split the filepath into name and path
-        fname = fpath.rsplit("/", 1)[-1]
-        fpath = fpath.rsplit("/", 1)[0] + "/"
+        fname, fpath = split_path(fpath)
+
+        # create the object to run analysis
         image = Image(fname, fpath)
         paths = image.process_image(True)  # run analysis with normalisation
 
@@ -69,9 +75,12 @@ def analysis_action():
         paths.insert(2, tple[0])
         paths.insert(3, tple[1])
 
+        # titles for the constructed HTML
         titles = ["Original Image", "Pre Processed Image", "NDVI Grey", "NDVI Colour",
                   "NDVI Colour Bar", "NDVI Colour Map", "Object Detection", "Crop Extraction"]
         print('p= ', paths)
+
+        # now construct the HTML for displaying the images
         image_HTML = ""
         for i in range(len(paths)):
             new_section = "<div class='output' style='padding: 10px 0px'><h3>" + titles[i] +\
@@ -88,13 +97,10 @@ def image_match_action():
     print("-image_match_action")
     fpath1 = request.form.get("option1")
     fpath2 = request.form.get("option2")
-    if fpath1 == "" or fpath1 == "":
-        fpath1 = "[Empty]"
-        fpath2 = "[Empty]"
-    else:
+    if fpath1 != "" and fpath1 != "":
         # split the filepath into name and path
-        fname1 = fpath1.rsplit("/", 1)[-1]
-        fpath1 = fpath1.rsplit("/", 1)[0] + "/"
+        fname1, fpath1 = split_path(fpath1)
+
         image = Image(fname1, fpath1)
 
         paths = []
@@ -121,7 +127,7 @@ def analysis():
         image_HTML = session['image_HTML']
     except:
         image_HTML = '<p>Choose an image to analyse and the output will be shown below</p>'
-
+    # render with args
     return render_template("analysis.html", image_HTML=image_HTML, raw_files=drop_down)
 
 
@@ -133,7 +139,7 @@ def image_match():
         match_HTML = session['match_HTML']
     except:
         match_HTML = '<p>Choose two images to compare and the output will be shown below</p>'
-
+    # render with args
     return render_template("image_match.html", match_HTML=match_HTML, raw_files=drop_down)
 
 
