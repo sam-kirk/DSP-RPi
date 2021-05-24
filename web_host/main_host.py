@@ -26,6 +26,19 @@ app = Flask(__name__)
 # should be secret but not required for local hosting
 app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
 
+# disable caching to allow for new image matches to be completed
+@app.after_request
+def add_header(r):
+    """
+    Code fix from stackoverflow: https://stackoverflow.com/questions/34066804/disabling-caching-in-flask
+    Add headers to both force latest IE rendering engine or Chrome Frame,
+    and also to cache the rendered page for 10 minutes.
+    """
+    r.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    r.headers["Pragma"] = "no-cache"
+    r.headers["Expires"] = "0"
+    r.headers['Cache-Control'] = 'public, max-age=0'
+    return r
 
 @app.route("/home")
 def home():
