@@ -13,11 +13,7 @@ def image_capture():
         if take_picture == "t":
             timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
             image_src = "raw_images/" + timestamp + ".png"
-            # print('bing')
-            camera.start_preview()
-            # sleep(2)
             camera.capture(image_src)
-            camera.stop_preview()
             # print('bong')
             return render_template('image-capture.html')
     finally:

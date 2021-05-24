@@ -173,10 +173,6 @@ class Image:
         # blur to reduce noise and add softness to edges
         img_g_blur = cv2.GaussianBlur(img_g, (35, 35), 0)
 
-        '''# erode and dilate to remove small blobs
-        img_g_blur = cv2.erode(img_g_blur, None, iterations=2)
-        img_g_blur = cv2.dilate(img_g_blur, None, iterations=4)'''
-
         # create an iterable list of masks to overlay classified by dead, unhealthy, healthy and very healthy thresholds
         masks = [cv2.inRange(img_g_blur, VH, 255), cv2.inRange(img_g_blur, H, VH), cv2.inRange(img_g_blur, UH, H),
                  cv2.inRange(img_g_blur, D, UH)]
@@ -242,7 +238,7 @@ class Image:
         thresh = cv2.erode(thresh, None, iterations=2)
         thresh = cv2.dilate(thresh, None, iterations=4)
 
-        # perform a connected component analysis on the thresholded image
+        # perform a connected component analysis labeling on the thresholded image
         # then initialize a mask to store only the "large" components
         labels = measure.label(thresh, connectivity=2, background=0)  # image with labels
         mask = np.zeros(thresh.shape, dtype="uint8")
@@ -255,6 +251,7 @@ class Image:
             # otherwise, construct the label mask and count the
             # number of pixels
             label_mask = np.zeros(thresh.shape, dtype="uint8")
+            # make the component white
             label_mask[labels == label] = 255
             num_pixels = cv2.countNonZero(label_mask)
             # if the number of pixels in the component is sufficiently large
@@ -363,6 +360,7 @@ class Image:
                 sel = mask != 255
                 # self.quick_show(mask)
 
+                # now use the stencil to show only the ROI in the image
                 image[sel] = 0
                 # self.quick_show(image)
 
