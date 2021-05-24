@@ -101,20 +101,23 @@ def image_match_action():
         # split the filepath into name and path
         fname1, fpath1 = split_path(fpath1)
 
+        # create the object for analysis
         image = Image(fname1, fpath1)
 
         paths = []
+        # call the image match analysis function with second path
         res = image.is_match(fpath2, 10)  # run match with 10 good matches
+        # index 1 will be the image path index 0 is the boolean result of the match
         paths.append(res[1])
         titles = ["Image Match"]
         print('p= ', paths)
+        # construct the HTML
         match_HTML = ""
         for i in range(len(paths)):
             new_section = "<div class='output' style='padding: 10px 0px'><h3>" + titles[i] + ' - <i>' + str(res[0]) +\
                           "</i></h3><hr style='border-top: 1px dashed #333333; width: 40%; margin: 0px;" \
                           "'><img class='output_image' src='" + paths[i] + "'><p>@location " + paths[i] + "</p></div>"
             match_HTML = match_HTML + new_section
-
         session['match_HTML'] = match_HTML
     return redirect("image_match")
 
