@@ -19,7 +19,7 @@ import re
 app = Flask(__name__)
 
 # should be secret but not required for local hosting
-app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
+app.secret_key = b'_5#y3L"F4Q8z\n\xec]/'
 
 
 # find all the raw files in static/images
@@ -97,7 +97,7 @@ def image_match_action():
     print("-image_match_action")
     fpath1 = request.form.get("option1")
     fpath2 = request.form.get("option2")
-    if fpath1 != "" and fpath1 != "":
+    if fpath1 != "" and fpath2 != "":
         # split the filepath into name and path
         fname1, fpath1 = split_path(fpath1)
 
@@ -119,6 +119,8 @@ def image_match_action():
                           "'><img class='output_image' src='" + paths[i] + "'><p>@location " + paths[i] + "</p></div>"
             match_HTML = match_HTML + new_section
         session['match_HTML'] = match_HTML
+    else:
+        session['match_HTML'] = ""
     return redirect("image_match")
 
 
