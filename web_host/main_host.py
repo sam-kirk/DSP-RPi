@@ -18,6 +18,7 @@ import re
 
 app = Flask(__name__)
 
+
 # should be secret but not required for local hosting
 app.secret_key = b'_5#y3L"F4Q8z\n\xec]/'
 
