@@ -3,7 +3,9 @@
 """
 Created on Tue Nov 10 15:55:22 2020
 
-@author: sam
+@author: sam kirk
+
+@purpose: This runs the web host for the NDVI analysis system navigate to 0.0.0.0/home on run
 """
 from flask import Flask, session, request, render_template, redirect, url_for, send_from_directory, send_file
 import os
@@ -13,13 +15,6 @@ import glob
 from image_class import Image
 import itertools
 import re
-
-#if running on pi image_capture can run
-try:
-    from picamera import PiCamera
-    is_pi = True
-except ImportError:
-    is_pi = False
 
 app = Flask(__name__)
 
@@ -45,8 +40,6 @@ def home():
     print("-home")
     return render_template("home.html")
 
-
-# controller function
 @app.route("/analysis_action", methods=["POST"])
 def analysis_action():
     print("-analysis_action")
@@ -80,7 +73,6 @@ def analysis_action():
         session['image_HTML'] = image_HTML
     return redirect("analysis")
 
-# controller function
 @app.route("/image_match_action", methods=["POST"])
 def image_match_action():
     print("-image_match_action")
@@ -109,7 +101,6 @@ def image_match_action():
 
         session['match_HTML'] = match_HTML
     return redirect("image_match")
-
 
 @app.route("/analysis", methods=["POST", "GET"])
 def analysis():
@@ -157,9 +148,5 @@ def help():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0")
-    #directory = "working_image_sets/raw_image_blue_filter/"
-    #name_term = "*.png"  # can be changed for different patterns or filetypes
-    #image_list = load_image_set(directory, name_term)
-    #mock_function(image_list)
 
 
