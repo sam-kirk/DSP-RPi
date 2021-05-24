@@ -16,12 +16,13 @@
 
 import cv2
 import numpy as np
-import matplotlib
-matplotlib.use('agg')
-import matplotlib.pyplot as plt
 from imutils import contours
 from skimage import measure
 import imutils
+import matplotlib
+import matplotlib.pyplot as plt
+matplotlib.use('agg')
+
 
 # constants
 FILE_TYPE = ".png"
@@ -153,7 +154,7 @@ class Image:
         cax = ax.imshow(img, vmin=0, vmax=255)
         ax.set_title('NDVI Image')
         # Add colourbar
-        cbar = fig.colorbar(cax, ticks=[0, 0.33*255, 0.66*255, 255], shrink=0.5)
+        cbar = fig.colorbar(cax, ticks=[0, 0.33 * 255, 0.66 * 255, 255], shrink=0.5)
         cbar.ax.set_yticklabels(['<0', '0.33', '0.66', '1'])
         plt.axis('off')
         plt.savefig(self.dir + self.name.split('.')[0] + '_ndvi-c-bar.png', format='png', dpi=800)
@@ -212,7 +213,7 @@ class Image:
         output = np.zeros(img.shape, dtype="uint8")
         # higher alpha the more prominent the overlay
         alpha = 0.6
-        cv2.addWeighted(overlay, alpha, img, 1-alpha, 0, output)
+        cv2.addWeighted(overlay, alpha, img, 1 - alpha, 0, output)
 
         cv2.imwrite(self.attach_name_tail(NDVI_COLOUR_MAP_NAME_TAIL), output)
         return self.attach_name_tail(NDVI_COLOUR_MAP_NAME_TAIL)
@@ -234,8 +235,8 @@ class Image:
         # [0] returns threshold value [1] returns bitmap
         thresh = cv2.threshold(blurred, H, 255, cv2.THRESH_BINARY)[1]
 
-        #self.quick_show(thresh)
-        #cv2.imwrite(self.attach_name_tail('_threshmask'), thresh)
+        # self.quick_show(thresh)
+        # cv2.imwrite(self.attach_name_tail('_threshmask'), thresh)
 
         # perform a series of erosions and dilations to remove small blobs from the thresholded image
         thresh = cv2.erode(thresh, None, iterations=2)
@@ -261,8 +262,6 @@ class Image:
             if num_pixels > BLOB_SIZE:  # number of pixels to be a large blob
                 mask = cv2.add(mask, label_mask)
 
-
-
         # find the contours in the mask, then sort them from left to right
         cnts = cv2.findContours(mask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         cnts = imutils.grab_contours(cnts)
@@ -281,17 +280,17 @@ class Image:
                 c_h = cv2.convexHull(c)
                 cv2.drawContours(img, [c], 0, (255, 0, 0), 3)
                 cv2.drawContours(img, [c_h], 0, (255, 0, 200), 3)
-                #self.quick_show(img)
+                # self.quick_show(img)
 
                 # calculate the perimeter area ration and represent the difference as a percentage
                 perimeter_area_ratio_c = cv2.arcLength(c, True) / cv2.contourArea(c)
                 perimeter_area_ratio_c_h = cv2.arcLength(c_h, True) / cv2.contourArea(c_h)
-                match = 1-(perimeter_area_ratio_c_h/perimeter_area_ratio_c)
+                match = 1 - (perimeter_area_ratio_c_h / perimeter_area_ratio_c)
 
-                cv2.putText(img, "#" + str(i+1) + " main crop", (x + w//2, y + h//2),
+                cv2.putText(img, "#" + str(i + 1) + " main crop", (x + w // 2, y + h // 2),
                             cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
                 cv2.putText(img, "edge effect: " + str(round((1 - match) * 100, 1)) + "%",
-                            (x + w // 2, (y + h // 2)+30),
+                            (x + w // 2, (y + h // 2) + 30),
                             cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 200), 2)
 
             else:
@@ -299,11 +298,11 @@ class Image:
                 (x, y, w, h) = cv2.boundingRect(c)
                 ((cX, cY), radius) = cv2.minEnclosingCircle(c)
                 cv2.drawContours(img, [c], 0, (0, 0, 200), 3)
-                cv2.circle(img, (int(cX), int(cY)), int(radius),(0, 0, 255), 3)
+                cv2.circle(img, (int(cX), int(cY)), int(radius), (0, 0, 255), 3)
                 cv2.putText(img, "#{} anomaly".format(i + 1), (x, y - 15),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
 
-        #self.quick_show(img)
+        # self.quick_show(img)
         cv2.imwrite(self.attach_name_tail(NDVI_OBJECTS_NAME_TAIL), img)
         return self.attach_name_tail(NDVI_OBJECTS_NAME_TAIL)
 
@@ -357,15 +356,15 @@ class Image:
             # take the largest contour by area as main crop
             if i == 0:
                 mask = np.zeros_like(image)  # Create mask where white is what we want, black otherwise
-                cv2.fillPoly(mask, [c], [255,255,255])  # Draw filled contour in mask
+                cv2.fillPoly(mask, [c], [255, 255, 255])  # Draw filled contour in mask
 
-                #cv2.imwrite(self.attach_name_tail('_maincropextract'), mask)
+                # cv2.imwrite(self.attach_name_tail('_maincropextract'), mask)
                 # where the pixels are not black add them to selection
                 sel = mask != 255
-                #self.quick_show(mask)
+                # self.quick_show(mask)
 
                 image[sel] = 0
-                #self.quick_show(image)
+                # self.quick_show(image)
 
                 # Now crop
                 # get bounding rectangle to crop to
@@ -417,7 +416,7 @@ class Image:
 
         img3 = cv2.drawMatches(img1, kp1, img2, kp2, good, None, flags=2)
 
-        #self.quick_show(img3)
+        # self.quick_show(img3)
         cv2.imwrite(self.attach_name_tail(NDVI_MATCH_NAME_TAIL), img3)
         return match, self.attach_name_tail(NDVI_MATCH_NAME_TAIL)
 
